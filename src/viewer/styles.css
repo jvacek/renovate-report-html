@@ -64,7 +64,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font:
-    14px / 1.5 system-ui,
+    0.875rem / 1.5 system-ui,
     -apple-system,
     "Segoe UI",
     Roboto,

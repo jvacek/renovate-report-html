@@ -158,6 +158,8 @@ export interface Column<T> {
   class?: string;
 }
 
+const collator = new Intl.Collator(undefined, { numeric: true });
+
 export function SortableTable<T>({
   columns,
   rows,
@@ -183,7 +185,7 @@ export function SortableTable<T>({
       const y = by(b);
       if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
       if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
-      return String(x).localeCompare(String(y), undefined, { numeric: true }) * dir;
+      return collator.compare(String(x), String(y)) * dir;
     });
   }, [rows, columns, sort, rowKey]);
 
@@ -197,7 +199,7 @@ export function SortableTable<T>({
               const active = sort?.column === i;
               const ariaSort = active ? (sort.desc ? "descending" : "ascending") : undefined;
               return (
-                <th key={column.label} class={column.class} aria-sort={ariaSort}>
+                <th key={column.label} scope="col" class={column.class} aria-sort={ariaSort}>
                   {column.sort ? (
                     <button
                       type="button"
@@ -210,7 +212,9 @@ export function SortableTable<T>({
                       }
                     >
                       {column.label}
-                      <span class="sort-arrow">{active ? (sort.desc ? "▼" : "▲") : ""}</span>
+                      <span class="sort-arrow" aria-hidden="true">
+                        {active ? (sort.desc ? "▼" : "▲") : ""}
+                      </span>
                     </button>
                   ) : (
                     column.label
@@ -324,7 +328,7 @@ const RepoItems = ({ repos }: { repos: string[] }) => (
  * them reachable by find-in-page while collapsed.
  */
 export function RepoList({ repos, limit = 5 }: { repos: string[]; limit?: number }) {
-  const sorted = [...repos].sort((a, b) => a.localeCompare(b));
+  const sorted = repos.toSorted((a, b) => a.localeCompare(b));
   const rest = sorted.slice(limit);
   return (
     <div class="repo-list">
