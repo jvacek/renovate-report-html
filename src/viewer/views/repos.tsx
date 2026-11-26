@@ -1,9 +1,18 @@
 import { useMemo, useState } from "preact/hooks";
 import { hasBranchData, openChanges } from "../../report/changes.ts";
 import type { Repository } from "../../report/data.ts";
-import { changeTerms } from "../../report/platform.ts";
+import { changeTerms, platformLinks } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
-import { Age, type Column, orderUpdateTypes, SortableTable, StalenessLegend, UpdateCounts } from "../components.tsx";
+import {
+  Age,
+  type Column,
+  orderUpdateTypes,
+  RepoAvatar,
+  RepoName,
+  SortableTable,
+  StalenessLegend,
+  UpdateCounts,
+} from "../components.tsx";
 import { href } from "../router.ts";
 
 interface RepoRow {
@@ -46,7 +55,7 @@ function repoRow(repo: Repository): RepoRow {
 }
 
 /** `changesLabel` is unset when the report has no branch data, which hides the column. */
-function columnsFor(updateTypes: string[], changesLabel?: string): Column<RepoRow>[] {
+function columnsFor(updateTypes: string[], changesLabel?: string, platformUrl?: string): Column<RepoRow>[] {
   const changes: Column<RepoRow>[] = changesLabel
     ? [
         {
@@ -62,7 +71,22 @@ function columnsFor(updateTypes: string[], changesLabel?: string): Column<RepoRo
     {
       label: "Repository",
       sort: (r) => r.repo.name,
-      render: (r) => <a href={href.repo(r.repo.name)}>{r.repo.name}</a>,
+      render: (r) => {
+        const avatar = platformLinks(r.repo, platformUrl)?.avatar;
+        const link = (
+          <a href={href.repo(r.repo.name)}>
+            <RepoName name={r.repo.name} />
+          </a>
+        );
+        return avatar ? (
+          <span class="with-icon">
+            <RepoAvatar url={avatar} name={r.repo.name} />
+            {link}
+          </span>
+        ) : (
+          link
+        );
+      },
     },
     {
       label: "Problems",
@@ -105,7 +129,7 @@ function columnsFor(updateTypes: string[], changesLabel?: string): Column<RepoRo
   ];
 }
 
-export function ReposView({ repositories }: { repositories: Repository[] }) {
+export function ReposView({ repositories, platformUrl }: { repositories: Repository[]; platformUrl?: string }) {
   const [filter, setFilter] = useState("");
   const rows = useMemo(() => repositories.map(repoRow), [repositories]);
   // One slot per update type that occurs anywhere, so chips line up across rows.
@@ -114,8 +138,9 @@ export function ReposView({ repositories }: { repositories: Repository[] }) {
       columnsFor(
         orderUpdateTypes(rows.flatMap((r) => Object.keys(r.updatesByType))),
         hasBranchData(repositories) ? `Open ${changeTerms(repositories[0]?.platform).short}s` : undefined,
+        platformUrl,
       ),
-    [rows, repositories],
+    [rows, repositories, platformUrl],
   );
   const needle = filter.trim().toLowerCase();
   const shown = needle ? rows.filter((r) => r.repo.name.toLowerCase().includes(needle)) : rows;

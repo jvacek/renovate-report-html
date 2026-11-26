@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { toReportData } from "../src/report/data.ts";
-import { platformLinks, platformWebUrl } from "../src/report/platform.ts";
+import { platformLinks, platformWebUrl, splitRepoName } from "../src/report/platform.ts";
 import { parseReport } from "../src/report/schema.ts";
 import { readFixture } from "./helpers.ts";
 
@@ -19,6 +19,11 @@ describe("platformLinks", () => {
     expect(links?.changesLabel).toBe("Merge requests");
     expect(links?.changes).toBe("https://gitlab.com/gitlab-org/frontend/eslint-plugin/-/merge_requests");
     expect(links?.change(7)).toBe("https://gitlab.com/gitlab-org/frontend/eslint-plugin/-/merge_requests/7");
+    expect(links?.avatar).toBe("https://gitlab.com/api/v4/projects/gitlab-org%2Ffrontend%2Feslint-plugin/avatar");
+  });
+
+  it("has no repository icon on GitHub", () => {
+    expect(platformLinks({ name: "expressjs/express", platform: "github" })?.avatar).toBeUndefined();
   });
 
   it("uses a self-hosted base URL", () => {
@@ -31,6 +36,16 @@ describe("platformLinks", () => {
     expect(platformLinks({ name: "local", platform: "local" })).toBeUndefined();
     expect(platformLinks({ name: "a/b", platform: "bitbucket" }, "https://bb.example.com")).toBeUndefined();
     expect(platformLinks({ name: "a/b" })).toBeUndefined();
+  });
+});
+
+describe("splitRepoName", () => {
+  it.each([
+    ["gitlab-org/frontend/eslint-plugin", "gitlab-org/frontend/", "eslint-plugin"],
+    ["expressjs/express", "expressjs/", "express"],
+    ["local", "", "local"],
+  ])("%s", (full, path, name) => {
+    expect(splitRepoName(full)).toEqual({ path, name });
   });
 });
 

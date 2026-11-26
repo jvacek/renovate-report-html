@@ -1,5 +1,5 @@
 import type { ReportData } from "../../report/data.ts";
-import { ProblemList } from "../components.tsx";
+import { ProblemList, RepoName } from "../components.tsx";
 import { href } from "../router.ts";
 
 export function ProblemsView({ data }: { data: ReportData }) {
@@ -20,7 +20,9 @@ export function ProblemsView({ data }: { data: ReportData }) {
       {repos.map((repo) => (
         <section key={repo.name}>
           <h2>
-            <a href={href.repo(repo.name)}>{repo.name}</a>
+            <a href={href.repo(repo.name)}>
+              <RepoName name={repo.name} />
+            </a>
           </h2>
           <ProblemList problems={repo.problems} />
         </section>

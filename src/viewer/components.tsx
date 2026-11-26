@@ -2,7 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import type { OpenChange } from "../report/changes.ts";
 import type { Dep, Problem, Update } from "../report/data.ts";
-import { platformLinks } from "../report/platform.ts";
+import { platformLinks, splitRepoName } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
 import { href } from "./router.ts";
 
@@ -327,11 +327,39 @@ export function ChangeLink({ change, platformUrl }: { change: OpenChange; platfo
   );
 }
 
+/** "group/sub/" in muted text so the project name itself stands out. Keeps the full name as one string for find-in-page. */
+export function RepoName({ name }: { name: string }) {
+  const parts = splitRepoName(name);
+  return (
+    <>
+      {parts.path && <span class="repo-path">{parts.path}</span>}
+      {parts.name}
+    </>
+  );
+}
+
+/**
+ * The project's icon, hotlinked from the code host. Under it sits a letter tile, like the
+ * code host's own fallback, which shows when the project has no icon or the image can't load
+ * (offline, or a private project the browser isn't signed in to).
+ */
+export function RepoAvatar({ url, name }: { url: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <span class="repo-avatar" aria-hidden="true">
+      {splitRepoName(name).name.charAt(0).toUpperCase()}
+      {!failed && <img src={url} alt="" loading="lazy" referrerpolicy="no-referrer" onError={() => setFailed(true)} />}
+    </span>
+  );
+}
+
 const RepoItems = ({ repos }: { repos: string[] }) => (
   <ul>
     {repos.map((repo) => (
       <li key={repo}>
-        <a href={href.repo(repo)}>{repo}</a>
+        <a href={href.repo(repo)}>
+          <RepoName name={repo} />
+        </a>
       </li>
     ))}
   </ul>

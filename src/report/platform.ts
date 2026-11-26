@@ -2,6 +2,8 @@
 
 export interface PlatformLinks {
   repo: string;
+  /** The project's own icon. Only GitLab has one per repository; it answers 404 when none is set. */
+  avatar?: string;
   /** "Pull requests" or "Merge requests", as the platform calls them. */
   changesLabel: string;
   changes: string;
@@ -32,6 +34,12 @@ export function platformWebUrl(endpoint: string): string {
   return `${url.origin}${path}`;
 }
 
+/** "group/sub/app" -> { path: "group/sub/", name: "app" }. The path is empty for names without a slash. */
+export function splitRepoName(full: string): { path: string; name: string } {
+  const cut = full.lastIndexOf("/") + 1;
+  return { path: full.slice(0, cut), name: full.slice(cut) };
+}
+
 /** Undefined for platforms we can't link to, such as local runs. */
 export function platformLinks(repo: { name: string; platform?: string }, baseUrl?: string): PlatformLinks | undefined {
   const base = baseUrl ?? (repo.platform && DEFAULT_URLS[repo.platform]);
@@ -48,6 +56,7 @@ export function platformLinks(repo: { name: string; platform?: string }, baseUrl
     case "gitlab":
       return {
         repo: repoUrl,
+        avatar: `${base}/api/v4/projects/${encodeURIComponent(repo.name)}/avatar`,
         changesLabel: "Merge requests",
         changes: `${repoUrl}/-/merge_requests`,
         change: (n) => `${repoUrl}/-/merge_requests/${n}`,

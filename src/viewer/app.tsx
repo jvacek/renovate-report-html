@@ -80,7 +80,7 @@ function Page({
     case "overview":
       return <Overview data={data} summary={summary} />;
     case "repos":
-      return <ReposView repositories={data.repositories} />;
+      return <ReposView repositories={data.repositories} platformUrl={data.platformUrl} />;
     case "repo": {
       const repo = data.repositories.find((r) => r.name === route.repo);
       return repo ? (

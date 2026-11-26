@@ -12,6 +12,8 @@ import {
   orderUpdateTypes,
   ProblemList,
   plural,
+  RepoAvatar,
+  RepoName,
   SortableTable,
   StalenessLegend,
   Stat,
@@ -131,7 +133,12 @@ export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?
       <p class="crumbs">
         <a href={href.repos()}>Repositories</a> /
       </p>
-      <h1>{repo.name}</h1>
+      <h1 class={links?.avatar ? "with-icon" : undefined}>
+        {links?.avatar && <RepoAvatar url={links.avatar} name={repo.name} />}
+        <span>
+          <RepoName name={repo.name} />
+        </span>
+      </h1>
       {meta.some(Boolean) && <p class="muted">{meta.filter(Boolean).join(" · ")}</p>}
       {links && (
         <p class="actions">

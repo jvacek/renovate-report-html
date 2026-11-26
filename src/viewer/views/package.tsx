@@ -16,6 +16,7 @@ import {
   CurrentVersion,
   ExternalButton,
   RepoList,
+  RepoName,
   SortableTable,
   StalenessLegend,
   Stat,
@@ -29,7 +30,11 @@ function baseColumns(newest: string | undefined): Column<DepRef>[] {
     {
       label: "Repository",
       sort: (r) => r.repo,
-      render: (r) => <a href={href.repo(r.repo)}>{r.repo}</a>,
+      render: (r) => (
+        <a href={href.repo(r.repo)}>
+          <RepoName name={r.repo} />
+        </a>
+      ),
     },
     { label: "Manager", sort: (r) => r.manager, render: (r) => r.manager },
     {

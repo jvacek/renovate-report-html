@@ -632,6 +632,53 @@ h1 .ds-icon {
   height: 0.85em;
 }
 
+/* Fades the group path in whatever colour the name has, link or heading. */
+.repo-path {
+  color: color-mix(in srgb, currentColor 60%, transparent);
+  font-weight: 400;
+}
+
+.repo-avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  flex: none;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--muted);
+  font-size: 0.85em;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Long names wrap in tables: keep the icon beside the first line. */
+td .with-icon:has(> .repo-avatar) {
+  align-items: flex-start;
+}
+
+td .repo-avatar {
+  margin-top: 0.2em;
+}
+
+.repo-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--bg);
+}
+
+h1 .repo-avatar {
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: var(--radius);
+}
+
 .version-chips {
   display: inline-flex;
   flex-wrap: wrap;
