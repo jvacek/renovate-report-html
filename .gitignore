@@ -1,0 +1,12 @@
+node_modules/
+dist/
+out/
+coverage/
+*.log
+.DS_Store
+
+# Reports from private repositories. Never commit these.
+fixtures/private/
+
+# OpenChamber browser screenshots
+.openchamber/

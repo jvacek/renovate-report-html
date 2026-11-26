@@ -1,0 +1,38 @@
+# Git hooks, run by prek (https://prek.j178.dev). Install once with `prek install`.
+# Local hooks call tools from node_modules, so run `pnpm install` first.
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "check-added-large-files" },
+  { id = "check-case-conflict" },
+  { id = "check-merge-conflict" },
+  { id = "check-json" },
+  { id = "check-toml" },
+  { id = "check-yaml", exclude = "^pnpm-lock\\.yaml$" },
+  { id = "detect-private-key" },
+  { id = "mixed-line-ending", args = ["--fix=lf"] },
+  # Fixtures are Renovate output; keep them byte for byte.
+  { id = "end-of-file-fixer", exclude = "^fixtures/" },
+  { id = "trailing-whitespace", exclude = "^fixtures/" },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  {
+    id = "biome",
+    name = "biome (format and lint)",
+    language = "system",
+    entry = "node_modules/.bin/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true",
+    types_or = ["javascript", "jsx", "ts", "tsx", "json", "css"],
+  },
+  {
+    id = "typecheck",
+    name = "typecheck",
+    language = "system",
+    entry = "node_modules/.bin/tsc --noEmit",
+    types_or = ["ts", "tsx"],
+    pass_filenames = false,
+  },
+]

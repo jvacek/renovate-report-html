@@ -1,0 +1,47 @@
+{
+  "name": "renovate-report-html",
+  "version": "0.0.0",
+  "description": "Turn a Renovate JSON report into one interactive, self-contained HTML page",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jvacek/renovate-report-html.git"
+  },
+  "bin": {
+    "renovate-report-html": "./dist/cli.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "packageManager": "pnpm@12.23.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsdown",
+    "render:fixture": "node dist/cli.mjs fixtures/github-report-full.json -o out/demo/github/ --title \"Renovate report demo: GitHub\" && node dist/cli.mjs fixtures/gitlab-report-full.json -o out/demo/gitlab/ --title \"Renovate report demo: GitLab\" && node dist/cli.mjs fixtures/local-report.json -o out/demo/local/ --title \"Renovate report demo: local\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.9",
+    "@preact/preset-vite": "^2.10.6",
+    "@types/node": "^22.20.7",
+    "happy-dom": "^21.0.4",
+    "preact": "^11.2.0",
+    "simple-icons": "^16.38.1",
+    "tsdown": "^0.23.7",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vite-plugin-singlefile": "^2.3.4",
+    "vitest": "^5.1.1"
+  }
+}

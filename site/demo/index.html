@@ -1,0 +1,48 @@
+<!doctype html>
+<!-- CI copies site/ to the root of the GitHub Pages deploy; the reports are rendered next to this page. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>renovate-report-html demos</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font: 16px/1.5 system-ui, sans-serif;
+      }
+      body {
+        max-width: 40rem;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+      }
+      li {
+        margin: 0.75rem 0;
+      }
+      a {
+        font-weight: 600;
+      }
+      p {
+        margin: 0.2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>renovate-report-html demos</h1>
+    <p>Reports rendered from Renovate dry runs over public projects.</p>
+    <ul>
+      <li>
+        <a href="./github/">GitHub</a>
+        <p>Five repositories, with the branches Renovate would create.</p>
+      </li>
+      <li>
+        <a href="./gitlab/">GitLab</a>
+        <p>Six projects in one group, nested up to three levels deep.</p>
+      </li>
+      <li>
+        <a href="./local/">Local</a>
+        <p>A single checkout scanned with <code>--platform=local</code>.</p>
+      </li>
+    </ul>
+    <p><a href="https://github.com/jvacek/renovate-report-html">renovate-report-html on GitHub</a></p>
+  </body>
+</html>

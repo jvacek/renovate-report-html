@@ -1,0 +1,86 @@
+# Renovate's report format is experimental and can change in any minor release.
+# Every week, generate a fresh report with the latest Renovate and render it, so
+# a format change shows up here (as a failed scheduled run) before users hit it.
+name: Renovate compatibility
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  latest-renovate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # One per supported platform. GitLab runs a full dry run because branch data
+        # is where platforms differ most.
+        include:
+          - platform: github
+            mode: lookup
+          - platform: gitlab
+            mode: full
+          - platform: local
+            mode: lookup
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Resolve the latest Renovate version
+        id: renovate
+        run: echo "version=$(npm view renovate version)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate a ${{ matrix.platform }} report with Renovate ${{ steps.renovate.outputs.version }}
+        env:
+          # GitHub: the workflow token can read public repositories (set a RENOVATE_TOKEN
+          # secret if it hits rate limits). GitLab: GITLAB_TOKEN needs read_api.
+          RENOVATE_TOKEN: ${{ matrix.platform == 'gitlab' && secrets.GITLAB_TOKEN || secrets.RENOVATE_TOKEN || github.token }}
+          GITHUB_COM_TOKEN: ${{ github.token }}
+          RENOVATE_VERSION: ${{ steps.renovate.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+          MODE: ${{ matrix.mode }}
+          LOG_LEVEL: warn
+        # Renovate exits non-zero when a repository logs an error, which then also shows up
+        # in the report's problems. Only a missing report is a failure here; rendering
+        # is the real compatibility check.
+        run: |
+          status=0
+          scripts/generate-report.sh "$RUNNER_TEMP/report.json" "$PLATFORM" "$MODE" "$RENOVATE_VERSION" || status=$?
+          if [ ! -s "$RUNNER_TEMP/report.json" ]; then
+            echo "::error::Renovate wrote no report (exit code $status)"
+            exit 1
+          fi
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::Renovate exited with code $status. Its errors are listed as problems in the report."
+          fi
+
+      - name: Render it
+        env:
+          RENOVATE_VERSION: ${{ steps.renovate.outputs.version }}
+          PLATFORM: ${{ matrix.platform }}
+        run: node dist/cli.mjs "$RUNNER_TEMP/report.json" -o "$RUNNER_TEMP/rendered" --title "Renovate $RENOVATE_VERSION ($PLATFORM)"
+
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: renovate-${{ steps.renovate.outputs.version }}-${{ matrix.platform }}
+          path: |
+            ${{ runner.temp }}/report.json
+            ${{ runner.temp }}/rendered/
+          if-no-files-found: ignore
