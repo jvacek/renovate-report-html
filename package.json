@@ -1,6 +1,6 @@
 {
   "name": "renovate-report-html",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Turn a Renovate JSON report into one interactive, self-contained HTML page",
   "license": "MIT",
   "type": "module",
