@@ -39,7 +39,12 @@ async function boot(hash: string) {
   page.url = `http://localhost/index.html${hash}`;
   page.content = html;
   await page.waitUntilComplete();
-  return { document: page.mainFrame.document, console: page.virtualConsolePrinter, close: () => browser.close() };
+  return {
+    document: page.mainFrame.document,
+    console: page.virtualConsolePrinter,
+    waitUntilComplete: () => page.waitUntilComplete(),
+    close: () => browser.close(),
+  };
 }
 
 describe("rendered page", () => {
@@ -64,7 +69,34 @@ describe("rendered page", () => {
 
   it("lists every repository on the repositories page", async () => {
     const page = await boot("#/repos");
+    expect(page.document.querySelectorAll("tbody a")).toHaveLength(5);
+    await page.close();
+  });
+
+  it("nests repositories in folders that collapse by default", async () => {
+    const page = await boot("#/repos");
+    const buttons = () => [...page.document.querySelectorAll("button")];
+    expect(
+      buttons()
+        .find((b) => b.textContent === "Folders")
+        ?.getAttribute("aria-pressed"),
+    ).toBe("true");
+    const toggles = buttons().filter((b) => b.classList.contains("tree-toggle"));
+    expect(toggles.length).toBeGreaterThan(0);
+    const rows = page.document.querySelectorAll("tbody tr").length;
+    expect(rows).toBe(5 + toggles.length);
+    toggles[0]?.click();
+    await page.waitUntilComplete();
+    expect(page.document.querySelectorAll("tbody tr").length).toBeLessThan(rows);
+    await page.close();
+  });
+
+  it("shows full paths when chosen", async () => {
+    const page = await boot("#/repos");
+    [...page.document.querySelectorAll("button")].find((b) => b.textContent === "Full paths")?.click();
+    await page.waitUntilComplete();
     expect(page.document.querySelectorAll("tbody tr")).toHaveLength(5);
+    expect(page.document.querySelector("tbody")?.textContent).toContain("pallets/flask");
     await page.close();
   });
 

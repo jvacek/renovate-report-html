@@ -162,34 +162,68 @@ export interface Column<T> {
 
 const collator = new Intl.Collator(undefined, { numeric: true });
 
+interface ShownRow<T> {
+  row: T;
+  key: string;
+  depth: number;
+  /** Set on rows with children: whether they are showing. */
+  expanded?: boolean;
+}
+
+/**
+ * With `childrenOf`, rows form a tree: children sort among themselves under their parent, and
+ * rows with children get a toggle in the first column that collapses them.
+ */
 export function SortableTable<T>({
   columns,
   rows,
   rowKey,
+  childrenOf,
   initialSort,
   empty = "Nothing to show.",
 }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
+  childrenOf?: (row: T) => T[] | undefined;
   initialSort?: { column: number; desc: boolean };
   empty?: string;
 }) {
   const [sort, setSort] = useState(initialSort);
-  // Keys get the original index appended, since rows such as deps can repeat.
-  const sorted = useMemo(() => {
-    const keyed = rows.map((row, i) => ({ row, key: `${rowKey(row)}#${i}` }));
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
+  const shown = useMemo(() => {
     const by = sort && columns[sort.column]?.sort;
-    if (!sort || !by) return keyed;
-    const dir = sort.desc ? -1 : 1;
-    return keyed.sort(({ row: a }, { row: b }) => {
-      const x = by(a);
-      const y = by(b);
-      if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
-      if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
-      return collator.compare(String(x), String(y)) * dir;
+    const dir = sort?.desc ? -1 : 1;
+    const out: ShownRow<T>[] = [];
+    const walk = (list: T[], depth: number, parentKey: string) => {
+      // Keys get the original index appended, since rows such as deps can repeat.
+      const keyed = list.map((row, i) => ({ row, key: `${parentKey}${rowKey(row)}#${i}` }));
+      if (by) {
+        keyed.sort(({ row: a }, { row: b }) => {
+          const x = by(a);
+          const y = by(b);
+          if (x === undefined || y === undefined) return x === y ? 0 : x === undefined ? 1 : -1;
+          if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
+          return collator.compare(String(x), String(y)) * dir;
+        });
+      }
+      for (const { row, key } of keyed) {
+        const children = childrenOf?.(row);
+        const expanded = children && !collapsed.has(rowKey(row));
+        out.push({ row, key, depth, expanded });
+        if (children && expanded) walk(children, depth + 1, `${key}/`);
+      }
+    };
+    walk(rows, 0, "");
+    return out;
+  }, [rows, columns, sort, rowKey, childrenOf, collapsed]);
+
+  const toggle = (key: string) =>
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
     });
-  }, [rows, columns, sort, rowKey]);
 
   if (rows.length === 0) return <p class="muted">{empty}</p>;
   return (
@@ -227,11 +261,28 @@ export function SortableTable<T>({
           </tr>
         </thead>
         <tbody>
-          {sorted.map(({ row, key }) => (
-            <tr key={key}>
-              {columns.map((column) => (
+          {shown.map(({ row, key, depth, expanded }) => (
+            <tr key={key} class={expanded === undefined ? undefined : "tree-parent"}>
+              {columns.map((column, i) => (
                 <td key={column.label} class={column.class}>
-                  {column.render(row)}
+                  {childrenOf && i === 0 ? (
+                    <span class="tree-cell" style={{ "--depth": depth }}>
+                      {expanded === undefined ? (
+                        <span class="tree-leaf">{column.render(row)}</span>
+                      ) : (
+                        <button
+                          type="button"
+                          class="tree-toggle"
+                          aria-expanded={expanded}
+                          onClick={() => toggle(rowKey(row))}
+                        >
+                          {column.render(row)}
+                        </button>
+                      )}
+                    </span>
+                  ) : (
+                    column.render(row)
+                  )}
                 </td>
               ))}
             </tr>
@@ -327,9 +378,13 @@ export function ChangeLink({ change, platformUrl }: { change: OpenChange; platfo
   );
 }
 
-/** "group/sub/" in muted text so the project name itself stands out. Keeps the full name as one string for find-in-page. */
-export function RepoName({ name }: { name: string }) {
+/**
+ * "group/sub/" in muted text so the project name itself stands out. Keeps the full name as one
+ * string for find-in-page. With `hidePath`, only the project name shows; the path is in its tooltip.
+ */
+export function RepoName({ name, hidePath }: { name: string; hidePath?: boolean }) {
   const parts = splitRepoName(name);
+  if (hidePath) return <span title={name}>{parts.name}</span>;
   return (
     <>
       {parts.path && <span class="repo-path">{parts.path}</span>}

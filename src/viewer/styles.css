@@ -122,10 +122,12 @@ h3 {
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.theme-switcher {
+/* A row of toggle buttons, one pressed. */
+.theme-switcher,
+.segmented {
   display: flex;
   gap: 2px;
-  margin: 0 0 0 auto;
+  margin: 0;
   min-inline-size: 0;
   padding: 2px;
   border: 0;
@@ -133,10 +135,16 @@ h3 {
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.theme-switcher button {
+.theme-switcher {
+  margin-left: auto;
+}
+
+.theme-switcher button,
+.segmented button {
   display: grid;
   place-items: center;
   padding: 0.3rem;
+  font: inherit;
   color: var(--muted);
   background: none;
   border: 0;
@@ -144,17 +152,29 @@ h3 {
   cursor: pointer;
 }
 
-.theme-switcher button:hover {
+.segmented button {
+  padding: 0.15rem 0.6rem;
+}
+
+.theme-switcher button:hover,
+.segmented button:hover {
   color: var(--fg);
 }
 
-.theme-switcher button[aria-pressed="true"] {
+.theme-switcher button[aria-pressed="true"],
+.segmented button[aria-pressed="true"] {
   color: var(--fg);
   background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
-.theme-switcher button:focus-visible {
+/* The topbar is shaded and the page is not, so the pressed button takes the other one. */
+.segmented button[aria-pressed="true"] {
+  background: var(--bg-soft);
+}
+
+.theme-switcher button:focus-visible,
+.segmented button:focus-visible {
   outline: 2px solid var(--accent);
 }
 
@@ -350,6 +370,48 @@ th {
 
 .sort:focus-visible {
   outline: 2px solid var(--accent);
+}
+
+/* Tree rows: indented by depth, a chevron on rows that fold, and the same space on rows that don't. */
+.tree-cell {
+  display: block;
+  padding-left: calc(var(--depth) * 1.4em);
+}
+
+/* Block-level flex: inline, the empty spacer would set the baseline and push the row down a line. */
+.tree-toggle {
+  all: unset;
+  display: flex;
+  align-items: flex-start;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tree-toggle::before,
+.tree-leaf::before {
+  content: "";
+  flex: none;
+  width: 1.2em;
+}
+
+.tree-toggle::before {
+  content: "▸";
+  text-align: center;
+  color: var(--muted);
+  transition: rotate 0.1s;
+}
+
+.tree-toggle[aria-expanded="true"]::before {
+  rotate: 90deg;
+}
+
+.tree-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.tree-leaf {
+  display: flex;
+  align-items: flex-start;
 }
 
 .sort-arrow {
