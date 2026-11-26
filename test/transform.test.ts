@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { toProblem, toReportData } from "../src/report/data.ts";
 import { parseReport } from "../src/report/schema.ts";
-import { allDeps, packageIndex, staleness, summarize, versionCounts } from "../src/report/stats.ts";
+import {
+  allDeps,
+  isBehind,
+  newestInUse,
+  packageIndex,
+  staleness,
+  summarize,
+  versionCounts,
+} from "../src/report/stats.ts";
 import { fullReport, lookupData } from "./helpers.ts";
 
 describe("toReportData", () => {
@@ -132,6 +140,20 @@ describe("packageIndex", () => {
     expect(counts.map((c) => c.version)).toEqual(["v7.0.1", "v4.4.0"]);
     expect(counts.reduce((n, c) => n + c.uses, 0)).toBe(checkout?.usages.length);
     expect(counts.at(-1)?.repos).toEqual(["docker-library/hello-world"]);
+  });
+
+  it("marks uses behind the newest version in use", () => {
+    const checkout = packages.find((p) => p.id === "github-tags:actions/checkout");
+    const newest = checkout && newestInUse(checkout);
+    expect(newest).toBe("v7.0.1");
+    const behind = checkout?.usages.filter(({ dep }) => isBehind(dep, newest)) ?? [];
+    expect(behind.length).toBe(checkout && versionCounts(checkout).at(-1)?.uses);
+    expect(new Set(behind.map((u) => u.repo))).toEqual(new Set(["docker-library/hello-world"]));
+  });
+
+  it("marks nothing when all uses are on one version", () => {
+    const single = packages.find((p) => versionCounts(p).length === 1);
+    expect(single && newestInUse(single)).toBeUndefined();
   });
 
   it("puts the most widely used packages first", () => {

@@ -131,11 +131,29 @@ export interface VersionCount {
   ageInDays?: number;
 }
 
+/** The version a use is on, as shown and grouped in the package views. */
+export function versionInUse(dep: Dep): string | undefined {
+  return dep.currentVersion ?? dep.currentValue ?? dep.lockedVersion;
+}
+
+/** The newest version any use of the package is on. Undefined when all uses agree. */
+export function newestInUse(usage: PackageUsage): string | undefined {
+  const versions = [...new Set(usage.usages.map(({ dep }) => versionInUse(dep)).filter((v) => v !== undefined))];
+  if (versions.length < 2) return undefined;
+  return versions.reduce((a, b) => (compareVersions(b, a) > 0 ? b : a));
+}
+
+/** Whether a use is on an older version than the newest one in use elsewhere. */
+export function isBehind(dep: Dep, newest: string | undefined): boolean {
+  const version = versionInUse(dep);
+  return newest !== undefined && version !== undefined && compareVersions(version, newest) < 0;
+}
+
 /** The versions a package is used at, most used first. */
 export function versionCounts(usage: PackageUsage): VersionCount[] {
   const byVersion = new Map<string, VersionCount>();
   for (const { repo, dep } of usage.usages) {
-    const version = dep.currentVersion ?? dep.currentValue ?? dep.lockedVersion;
+    const version = versionInUse(dep);
     if (version === undefined) continue;
     let entry = byVersion.get(version);
     if (!entry) {

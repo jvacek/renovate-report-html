@@ -1,7 +1,14 @@
 import type { OpenChange } from "../../report/changes.ts";
 import { changeTerms } from "../../report/platform.ts";
 import { registryLink } from "../../report/registry.ts";
-import { type DepRef, type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
+import {
+  type DepRef,
+  isBehind,
+  newestInUse,
+  type PackageUsage,
+  type VersionCount,
+  versionCounts,
+} from "../../report/stats.ts";
 import {
   Age,
   ChangeLink,
@@ -17,42 +24,51 @@ import {
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
 
-const baseColumns: Column<DepRef>[] = [
-  {
-    label: "Repository",
-    sort: (r) => r.repo,
-    render: (r) => <a href={href.repo(r.repo)}>{r.repo}</a>,
-  },
-  { label: "Manager", sort: (r) => r.manager, render: (r) => r.manager },
-  {
-    label: "File",
-    sort: (r) => r.packageFile,
-    render: (r) => <code>{r.packageFile}</code>,
-  },
-  {
-    label: "Type",
-    sort: (r) => r.dep.depType,
-    render: (r) => <span class="muted">{r.dep.depType}</span>,
-  },
-  {
-    label: "Current",
-    sort: (r) => r.dep.currentVersion ?? r.dep.currentValue,
-    render: (r) => <CurrentVersion dep={r.dep} />,
-  },
-  {
-    label: "Age",
-    class: "num",
-    descFirst: true,
-    sort: (r) => r.dep.currentVersionAgeInDays,
-    render: (r) => <Age days={r.dep.currentVersionAgeInDays} timestamp={r.dep.currentVersionTimestamp} />,
-  },
-  { label: "Updates", render: (r) => <Updates updates={r.dep.updates} /> },
-  {
-    label: "Notes",
-    sort: (r) => r.dep.skipReason,
-    render: (r) => r.dep.skipReason && <span class="badge skipped">skipped: {r.dep.skipReason}</span>,
-  },
-];
+function baseColumns(newest: string | undefined): Column<DepRef>[] {
+  return [
+    {
+      label: "Repository",
+      sort: (r) => r.repo,
+      render: (r) => <a href={href.repo(r.repo)}>{r.repo}</a>,
+    },
+    { label: "Manager", sort: (r) => r.manager, render: (r) => r.manager },
+    {
+      label: "File",
+      sort: (r) => r.packageFile,
+      render: (r) => <code>{r.packageFile}</code>,
+    },
+    {
+      label: "Type",
+      sort: (r) => r.dep.depType,
+      render: (r) => <span class="muted">{r.dep.depType}</span>,
+    },
+    {
+      label: "Current",
+      sort: (r) => r.dep.currentVersion ?? r.dep.currentValue,
+      render: (r) =>
+        isBehind(r.dep, newest) ? (
+          <span class="behind" title={`Behind ${newest}, the newest version in use`}>
+            <CurrentVersion dep={r.dep} />
+          </span>
+        ) : (
+          <CurrentVersion dep={r.dep} />
+        ),
+    },
+    {
+      label: "Age",
+      class: "num",
+      descFirst: true,
+      sort: (r) => r.dep.currentVersionAgeInDays,
+      render: (r) => <Age days={r.dep.currentVersionAgeInDays} timestamp={r.dep.currentVersionTimestamp} />,
+    },
+    { label: "Updates", render: (r) => <Updates updates={r.dep.updates} /> },
+    {
+      label: "Notes",
+      sort: (r) => r.dep.skipReason,
+      render: (r) => r.dep.skipReason && <span class="badge skipped">skipped: {r.dep.skipReason}</span>,
+    },
+  ];
+}
 
 function changesColumn(label: string, changesFor: (ref: DepRef) => OpenChange[], platformUrl?: string): Column<DepRef> {
   return {
@@ -110,13 +126,10 @@ export function PackageView({
   const changes = usage.usages.flatMap(changesFor);
   const changeCount = new Set(changes.map((c) => `${c.repo.name}#${c.branch.prNo}`)).size;
   const terms = changeTerms(changes[0]?.repo.platform);
+  const base = baseColumns(newestInUse(usage));
   const columns = changeCount
-    ? [
-        ...baseColumns.slice(0, 7),
-        changesColumn(`Open ${terms.short}`, changesFor, platformUrl),
-        ...baseColumns.slice(7),
-      ]
-    : baseColumns;
+    ? [...base.slice(0, 7), changesColumn(`Open ${terms.short}`, changesFor, platformUrl), ...base.slice(7)]
+    : base;
   const first = usage.usages[0]?.dep;
   const links = usage.usages.find(({ dep }) => dep.sourceUrl || dep.homepage || dep.changelogUrl)?.dep;
   const registry = first && registryLink(first);

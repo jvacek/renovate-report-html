@@ -690,6 +690,15 @@ h1 .ds-icon {
 }
 
 /* Outliers: only the use count is highlighted, so the version itself stays readable. */
+/* A use on an older version than the newest one in use elsewhere. */
+.behind > .version {
+  padding: 0 0.3em;
+  border-radius: 3px;
+  color: var(--warn-fg);
+  background: var(--warn-bg);
+  box-shadow: inset 0 0 0 1px var(--warn-border);
+}
+
 .version-chip.outlier .count {
   padding: 0 0.3em;
   border-radius: 3px;
