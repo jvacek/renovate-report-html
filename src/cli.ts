@@ -1,13 +1,14 @@
 #!/usr/bin/env node
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { join, relative, resolve, sep } from "node:path";
 import { parseArgs } from "node:util";
 import { toReportData } from "./report/data.ts";
+import { embedIcons } from "./report/icons.ts";
 import { platformWebUrl } from "./report/platform.ts";
 import { renderHtml } from "./report/render.ts";
 import { parseReport, ReportFormatError } from "./report/schema.ts";
 
-const USAGE = `Usage: renovate-report-html <report.json> [-o <dir>] [--title <title>] [--endpoint <url>]
+const USAGE = `Usage: renovate-report-html <report.json> [-o <dir>] [--title <title>] [--endpoint <url>] [--icons <dir>]
 
 Turn a Renovate JSON report (reportType=file) into a self-contained HTML page.
 
@@ -16,6 +17,9 @@ Options:
   -t, --title <title>  Page title (default: "Renovate report").
   --endpoint <url>     Self-hosted GitHub or GitLab, as passed to Renovate's --endpoint
                        or as the web URL. Used for repository and pull request links.
+  --icons <dir>        Embed repository icons from <dir>/<repository path>.<ext>, such as
+                       icons/group/app.webp. Without it, GitLab icons load from GitLab,
+                       which only works for public projects.
   -h, --help           Show this help.`;
 
 /** Resolved next to the bundled CLI: dist/cli.mjs reads dist/viewer/index.html. */
@@ -38,6 +42,7 @@ async function main(argv: string[]): Promise<number> {
       output: { type: "string", short: "o", default: "." },
       title: { type: "string", short: "t" },
       endpoint: { type: "string" },
+      icons: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -61,7 +66,18 @@ async function main(argv: string[]): Promise<number> {
   }
 
   const report = parseReport(await readJson(input));
-  const data = toReportData(report, { title: values.title, platformUrl: values.endpoint });
+  let data = toReportData(report, { title: values.title, platformUrl: values.endpoint });
+  if (values.icons) {
+    const iconDir = resolve(values.icons);
+    const entries = await readdir(iconDir, { recursive: true, withFileTypes: true });
+    const files = entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => relative(iconDir, join(entry.parentPath, entry.name)).split(sep).join("/"));
+    const result = await embedIcons(data, files, (file) => readFile(join(iconDir, file)));
+    data = result.data;
+    for (const warning of result.warnings) console.warn(`renovate-report-html: ${warning}`);
+    console.log(`Embedded ${result.embedded} project icon${result.embedded === 1 ? "" : "s"}`);
+  }
   const template = await readFile(TEMPLATE_URL, "utf8");
   const outDir = resolve(values.output);
   const outFile = join(outDir, "index.html");

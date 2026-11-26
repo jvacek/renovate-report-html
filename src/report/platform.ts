@@ -34,6 +34,23 @@ export function platformWebUrl(endpoint: string): string {
   return `${url.origin}${path}`;
 }
 
+type IconRepo = { name: string; platform?: string; icon?: string };
+type IconReport = { platformUrl?: string; embeddedIcons?: boolean };
+
+/**
+ * Where the viewer gets a repository's icon: the file the CLI embedded (`--icons`), or else a
+ * hotlink to GitLab, which only loads for public projects. Once icons are embedded, a missing
+ * one means there is none, so nothing is hotlinked.
+ */
+export function repoIcon(repo: IconRepo, report: IconReport): string | undefined {
+  return report.embeddedIcons ? repo.icon : platformLinks(repo, report.platformUrl)?.avatar;
+}
+
+/** Whether repositories get an icon slot (with a letter tile when there is no icon), so names line up. */
+export function hasIconSlot(repo: IconRepo, report: IconReport): boolean {
+  return Boolean(report.embeddedIcons || platformLinks(repo, report.platformUrl)?.avatar);
+}
+
 /** "group/sub/app" -> { path: "group/sub/", name: "app" }. The path is empty for names without a slash. */
 export function splitRepoName(full: string): { path: string; name: string } {
   const cut = full.lastIndexOf("/") + 1;

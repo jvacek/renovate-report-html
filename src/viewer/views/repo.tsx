@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { type OpenChange, openChanges } from "../../report/changes.ts";
-import type { Dep, Repository } from "../../report/data.ts";
-import { changeTerms, platformLinks } from "../../report/platform.ts";
+import type { Dep, ReportData, Repository } from "../../report/data.ts";
+import { changeTerms, hasIconSlot, platformLinks, repoIcon } from "../../report/platform.ts";
 import { allDeps, packageId } from "../../report/stats.ts";
 import {
   Age,
@@ -112,7 +112,8 @@ function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   return [dep.name, dep.packageName, dep.depType, dep.datasource].some((v) => v?.toLowerCase().includes(needle));
 }
 
-export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?: string }) {
+export function RepoView({ repo, report }: { repo: Repository; report: ReportData }) {
+  const { platformUrl } = report;
   const links = platformLinks(repo, platformUrl);
   const terms = changeTerms(repo.platform);
   const changes = openChanges(repo);
@@ -133,8 +134,8 @@ export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?
       <p class="crumbs">
         <a href={href.repos()}>Repositories</a> /
       </p>
-      <h1 class={links?.avatar ? "with-icon" : undefined}>
-        {links?.avatar && <RepoAvatar url={links.avatar} name={repo.name} />}
+      <h1 class={hasIconSlot(repo, report) ? "with-icon" : undefined}>
+        {hasIconSlot(repo, report) && <RepoAvatar key={repo.name} url={repoIcon(repo, report)} name={repo.name} />}
         <span>
           <RepoName name={repo.name} />
         </span>

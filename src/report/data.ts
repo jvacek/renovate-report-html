@@ -14,6 +14,8 @@ export interface ReportData {
   generatedAt: string;
   /** Web URL of a self-hosted GitHub or GitLab. Unset means github.com or gitlab.com. */
   platformUrl?: string;
+  /** Set when the CLI embedded icons (`--icons`); the viewer then only shows `Repository.icon` and doesn't hotlink. */
+  embeddedIcons?: boolean;
   problems: Problem[];
   repositories: Repository[];
 }
@@ -37,6 +39,8 @@ export interface Repository {
   defaultBranch?: string;
   status?: string;
   configFileName?: string;
+  /** Project icon as a data URL, when the CLI embedded icons. */
+  icon?: string;
 }
 
 export interface Manager {

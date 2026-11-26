@@ -1,7 +1,7 @@
 import { useMemo, useState } from "preact/hooks";
 import { hasBranchData, openChanges } from "../../report/changes.ts";
-import type { Repository } from "../../report/data.ts";
-import { changeTerms, platformLinks } from "../../report/platform.ts";
+import type { ReportData, Repository } from "../../report/data.ts";
+import { changeTerms, hasIconSlot, repoIcon } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import {
   Age,
@@ -55,7 +55,7 @@ function repoRow(repo: Repository): RepoRow {
 }
 
 /** `changesLabel` is unset when the report has no branch data, which hides the column. */
-function columnsFor(updateTypes: string[], changesLabel?: string, platformUrl?: string): Column<RepoRow>[] {
+function columnsFor(updateTypes: string[], data: ReportData, changesLabel?: string): Column<RepoRow>[] {
   const changes: Column<RepoRow>[] = changesLabel
     ? [
         {
@@ -72,15 +72,14 @@ function columnsFor(updateTypes: string[], changesLabel?: string, platformUrl?: 
       label: "Repository",
       sort: (r) => r.repo.name,
       render: (r) => {
-        const avatar = platformLinks(r.repo, platformUrl)?.avatar;
         const link = (
           <a href={href.repo(r.repo.name)}>
             <RepoName name={r.repo.name} />
           </a>
         );
-        return avatar ? (
+        return hasIconSlot(r.repo, data) ? (
           <span class="with-icon">
-            <RepoAvatar url={avatar} name={r.repo.name} />
+            <RepoAvatar url={repoIcon(r.repo, data)} name={r.repo.name} />
             {link}
           </span>
         ) : (
@@ -129,7 +128,8 @@ function columnsFor(updateTypes: string[], changesLabel?: string, platformUrl?: 
   ];
 }
 
-export function ReposView({ repositories, platformUrl }: { repositories: Repository[]; platformUrl?: string }) {
+export function ReposView({ data }: { data: ReportData }) {
+  const { repositories } = data;
   const [filter, setFilter] = useState("");
   const rows = useMemo(() => repositories.map(repoRow), [repositories]);
   // One slot per update type that occurs anywhere, so chips line up across rows.
@@ -137,10 +137,10 @@ export function ReposView({ repositories, platformUrl }: { repositories: Reposit
     () =>
       columnsFor(
         orderUpdateTypes(rows.flatMap((r) => Object.keys(r.updatesByType))),
+        data,
         hasBranchData(repositories) ? `Open ${changeTerms(repositories[0]?.platform).short}s` : undefined,
-        platformUrl,
       ),
-    [rows, repositories, platformUrl],
+    [rows, repositories, data],
   );
   const needle = filter.trim().toLowerCase();
   const shown = needle ? rows.filter((r) => r.repo.name.toLowerCase().includes(needle)) : rows;

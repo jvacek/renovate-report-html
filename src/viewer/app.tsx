@@ -80,14 +80,10 @@ function Page({
     case "overview":
       return <Overview data={data} summary={summary} />;
     case "repos":
-      return <ReposView repositories={data.repositories} platformUrl={data.platformUrl} />;
+      return <ReposView data={data} />;
     case "repo": {
       const repo = data.repositories.find((r) => r.name === route.repo);
-      return repo ? (
-        <RepoView repo={repo} platformUrl={data.platformUrl} />
-      ) : (
-        <NotFound what={`repository ${route.repo}`} />
-      );
+      return repo ? <RepoView repo={repo} report={data} /> : <NotFound what={`repository ${route.repo}`} />;
     }
     case "packages":
       return <PackagesView packages={packages} filter={route} />;

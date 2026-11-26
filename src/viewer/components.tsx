@@ -339,16 +339,18 @@ export function RepoName({ name }: { name: string }) {
 }
 
 /**
- * The project's icon, hotlinked from the code host. Under it sits a letter tile, like the
- * code host's own fallback, which shows when the project has no icon or the image can't load
+ * The project's icon, embedded or hotlinked (see `repoIcon`). Under it sits a letter tile, like
+ * the code host's own fallback, which shows when there is no icon or the image can't load
  * (offline, or a private project the browser isn't signed in to).
  */
-export function RepoAvatar({ url, name }: { url: string; name: string }) {
+export function RepoAvatar({ url, name }: { url?: string; name: string }) {
   const [failed, setFailed] = useState(false);
   return (
     <span class="repo-avatar" aria-hidden="true">
       {splitRepoName(name).name.charAt(0).toUpperCase()}
-      {!failed && <img src={url} alt="" loading="lazy" referrerpolicy="no-referrer" onError={() => setFailed(true)} />}
+      {url && !failed && (
+        <img src={url} alt="" loading="lazy" referrerpolicy="no-referrer" onError={() => setFailed(true)} />
+      )}
     </span>
   );
 }
