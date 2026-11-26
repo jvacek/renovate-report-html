@@ -63,15 +63,26 @@ describe("toReportData", () => {
     expect(problem?.context).not.toHaveProperty("name");
   });
 
-  it("stringifies and truncates structured problem context", () => {
+  it("truncates long scalar problem context", () => {
+    const problem = toProblem({ msg: "x", level: 50, count: 3, long: "y".repeat(600) });
+    expect(problem.context.count).toBe("3");
+    expect(problem.context.long).toHaveLength(501);
+    expect(problem.payloads).toEqual([]);
+  });
+
+  it("keeps structured problem fields as pretty-printed payloads", () => {
     const problem = toProblem({
       msg: "x",
-      level: 50,
-      details: { a: 1 },
-      long: "y".repeat(600),
+      err: { name: "HTTPError", message: "404", stack: "y".repeat(600) },
+      details: { a: 1, b: 2 },
+      list: [1],
     });
-    expect(problem.context.details).toBe('{"a":1}');
-    expect(problem.context.long).toHaveLength(501);
+    expect(problem.context).toEqual({});
+    expect(problem.payloads).toEqual([
+      { key: "err", summary: "HTTPError: 404", json: expect.stringContaining(`"stack": "${"y".repeat(600)}"`) },
+      { key: "details", summary: "{ a, b }", json: '{\n  "a": 1,\n  "b": 2\n}' },
+      { key: "list", summary: "[1 item]", json: "[\n  1\n]" },
+    ]);
   });
 
   it("names deps by depName, falling back to packageName", () => {

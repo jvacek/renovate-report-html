@@ -551,6 +551,7 @@ th {
 }
 
 .problem {
+  min-width: 0;
   padding: 0.6rem 0.9rem;
   background: var(--bg);
   border: 1px solid var(--border);
@@ -588,6 +589,85 @@ th {
 .problem-context dd {
   margin: 0;
   word-break: break-all;
+}
+
+.problem-context dd.payload {
+  min-width: 0;
+  flex: 1;
+}
+
+.payload-open {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.payload-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payload-hint {
+  flex: none;
+  color: var(--link);
+}
+
+.payload-open:hover .payload-hint {
+  text-decoration: underline;
+}
+
+/* No padding on the dialog itself, so a click that lands on it is a click on the backdrop. */
+.payload-dialog {
+  width: min(60rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.payload-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.payload-dialog::backdrop {
+  background: rgb(0 0 0 / 0.4);
+}
+
+.payload-dialog header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.payload-dialog header code {
+  flex: 1;
+  font-weight: 600;
+}
+
+.payload-dialog pre {
+  margin: 0;
+  padding: 0.9rem;
+  overflow: auto;
+  background: var(--bg-soft);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .manager h3 {

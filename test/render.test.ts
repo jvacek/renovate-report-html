@@ -8,7 +8,7 @@ const data = (title: string): ReportData => ({
   version: 1,
   title,
   generatedAt: "2026-01-01T00:00:00.000Z",
-  problems: [{ message: "</script><script>alert(1)</script> $& $1", context: {} }],
+  problems: [{ message: "</script><script>alert(1)</script> $& $1", context: {}, payloads: [] }],
   repositories: [],
 });
 

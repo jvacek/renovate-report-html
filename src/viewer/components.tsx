@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
-import { useMemo, useState } from "preact/hooks";
+import { useMemo, useRef, useState } from "preact/hooks";
 import type { OpenChange } from "../report/changes.ts";
-import type { Dep, Problem, ReportData, Repository, Update } from "../report/data.ts";
+import type { Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
 import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
 import { href } from "./router.ts";
@@ -82,7 +82,7 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
               <span class={`badge level-${level}`}>{level}</span>
             </div>
             <p class="problem-msg">{problem.message}</p>
-            {Object.keys(problem.context).length > 0 && (
+            {(Object.keys(problem.context).length > 0 || problem.payloads.length > 0) && (
               <dl class="problem-context">
                 {Object.entries(problem.context).map(([key, value]) => (
                   <div key={key}>
@@ -98,12 +98,59 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
                     </dd>
                   </div>
                 ))}
+                {problem.payloads.map((payload) => (
+                  <div key={payload.key}>
+                    <dt>{payload.key}</dt>
+                    <dd class="payload">
+                      <PayloadButton payload={payload} />
+                    </dd>
+                  </div>
+                ))}
               </dl>
             )}
           </li>
         );
       })}
     </ul>
+  );
+}
+
+/** A one-line summary of a JSON payload that opens the full, pretty-printed JSON in a modal. */
+function PayloadButton({ payload }: { payload: Payload }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [copied, setCopied] = useState(false);
+  const copy = () =>
+    navigator.clipboard.writeText(payload.json).then(
+      () => setCopied(true),
+      () => {},
+    );
+  return (
+    <>
+      <button type="button" class="payload-open" onClick={() => dialog.current?.showModal()}>
+        <code class="payload-summary">{payload.summary}</code>
+        <span class="payload-hint">Show JSON</span>
+      </button>
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: the click closes on the backdrop; keyboards have Escape. */}
+      <dialog
+        ref={dialog}
+        class="payload-dialog"
+        aria-label={payload.key}
+        // A click on the dialog element itself, not its content, is a click on the backdrop.
+        onClick={(event) => event.target === event.currentTarget && event.currentTarget.close()}
+        onClose={() => setCopied(false)}
+      >
+        <header>
+          <code>{payload.key}</code>
+          <button type="button" class="button" onClick={copy}>
+            {copied ? "Copied" : "Copy"}
+          </button>
+          <button type="button" class="button" onClick={() => dialog.current?.close()}>
+            Close
+          </button>
+        </header>
+        <pre>{payload.json}</pre>
+      </dialog>
+    </>
   );
 }
 
