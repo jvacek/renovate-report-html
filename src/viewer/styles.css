@@ -722,8 +722,11 @@ td .with-icon:has(> .repo-avatar) {
   align-items: flex-start;
 }
 
+/* Just under a line of table text (0.875rem at line-height 1.5), so the row doesn't grow. */
 td .repo-avatar {
-  margin-top: 0.2em;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.03rem;
 }
 
 .repo-avatar img {
@@ -736,8 +739,8 @@ td .repo-avatar {
 }
 
 h1 .repo-avatar {
-  width: 1.2em;
-  height: 1.2em;
+  width: 2rem;
+  height: 2rem;
   border-radius: var(--radius);
 }
 
