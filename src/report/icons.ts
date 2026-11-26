@@ -4,6 +4,7 @@
  * The CLI embeds them as data URLs, so the page shows them without asking the code host.
  */
 import type { ReportData } from "./data.ts";
+import { groupPaths } from "./groups.ts";
 
 /** Icons bigger than this get a warning: they bloat the page, and resizing them first is cheap. */
 export const LARGE_ICON_BYTES = 50 * 1024;
@@ -40,20 +41,24 @@ export function matchIconFiles(files: string[], repoNames: string[]): Map<string
 
 export interface IconResult {
   data: ReportData;
+  /** Project icons embedded. */
   embedded: number;
+  embeddedGroups: number;
   warnings: string[];
 }
 
-/** `read` returns the bytes of a file from `matchIconFiles`. Repositories without one keep the letter tile. */
+/**
+ * `read` returns the bytes of a file from `matchIconFiles`. Group icons sit at the group's path,
+ * such as `icons/group/sub.webp`. Repositories and groups without one keep the letter tile.
+ */
 export async function embedIcons(
   data: ReportData,
   files: string[],
   read: (file: string) => Promise<Uint8Array>,
 ): Promise<IconResult> {
-  const matches = matchIconFiles(
-    files,
-    data.repositories.map((r) => r.name),
-  );
+  const repoNames = data.repositories.map((r) => r.name);
+  const groups = groupPaths(repoNames);
+  const matches = matchIconFiles(files, [...repoNames, ...groups]);
   const warnings: string[] = [];
   const icons = new Map<string, string>();
   for (const [name, file] of matches) {
@@ -68,16 +73,24 @@ export async function embedIcons(
     }
     icons.set(name, `data:${type};base64,${Buffer.from(bytes).toString("base64")}`);
   }
+  const groupIcons: Record<string, string> = {};
+  for (const path of groups) {
+    const icon = icons.get(path);
+    if (icon) groupIcons[path] = icon;
+  }
+  const embeddedGroups = Object.keys(groupIcons).length;
   return {
     data: {
       ...data,
       embeddedIcons: true,
+      ...(embeddedGroups > 0 && { groupIcons }),
       repositories: data.repositories.map((repo) => {
         const icon = icons.get(repo.name);
         return icon ? { ...repo, icon } : repo;
       }),
     },
-    embedded: icons.size,
+    embedded: icons.size - embeddedGroups,
+    embeddedGroups,
     warnings,
   };
 }

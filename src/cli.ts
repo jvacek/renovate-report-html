@@ -17,9 +17,9 @@ Options:
   -t, --title <title>  Page title (default: "Renovate report").
   --endpoint <url>     Self-hosted GitHub or GitLab, as passed to Renovate's --endpoint
                        or as the web URL. Used for repository and pull request links.
-  --icons <dir>        Embed repository icons from <dir>/<repository path>.<ext>, such as
-                       icons/group/app.webp. Without it, GitLab icons load from GitLab,
-                       which only works for public projects.
+  --icons <dir>        Embed repository and group icons from <dir>/<path>.<ext>, such as
+                       icons/group/app.webp or icons/group.webp. Without it, GitLab icons
+                       load from GitLab, which only works for public projects and groups.
   -h, --help           Show this help.`;
 
 /** Resolved next to the bundled CLI: dist/cli.mjs reads dist/viewer/index.html. */
@@ -76,7 +76,8 @@ async function main(argv: string[]): Promise<number> {
     const result = await embedIcons(data, files, (file) => readFile(join(iconDir, file)));
     data = result.data;
     for (const warning of result.warnings) console.warn(`renovate-report-html: ${warning}`);
-    console.log(`Embedded ${result.embedded} project icon${result.embedded === 1 ? "" : "s"}`);
+    const count = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
+    console.log(`Embedded ${count(result.embedded, "project icon")} and ${count(result.embeddedGroups, "group icon")}`);
   }
   const template = await readFile(TEMPLATE_URL, "utf8");
   const outDir = resolve(values.output);

@@ -46,6 +46,20 @@ export function repoIcon(repo: IconRepo, report: IconReport): string | undefined
   return report.embeddedIcons ? repo.icon : platformLinks(repo, report.platformUrl)?.avatar;
 }
 
+/**
+ * A group's icon, the same way as `repoIcon`: embedded, or else hotlinked from GitLab, which only
+ * loads for public groups. Other platforms have none.
+ */
+export function groupIcon(
+  path: string,
+  platform: string | undefined,
+  report: IconReport & { groupIcons?: Record<string, string> },
+): string | undefined {
+  if (report.embeddedIcons) return report.groupIcons?.[path];
+  if (platform !== "gitlab") return undefined;
+  return `${report.platformUrl ?? DEFAULT_URLS.gitlab}/api/v4/groups/${encodeURIComponent(path)}/avatar`;
+}
+
 /** Whether repositories get an icon slot (with a letter tile when there is no icon), so names line up. */
 export function hasIconSlot(repo: IconRepo, report: IconReport): boolean {
   return Boolean(report.embeddedIcons || platformLinks(repo, report.platformUrl)?.avatar);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReportData, Repository } from "../src/report/data.ts";
 import { embedIcons, imageType, LARGE_ICON_BYTES, matchIconFiles } from "../src/report/icons.ts";
-import { hasIconSlot, repoIcon } from "../src/report/platform.ts";
+import { groupIcon, hasIconSlot, repoIcon } from "../src/report/platform.ts";
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -87,6 +87,31 @@ describe("embedIcons", () => {
     expect(result.embedded).toBe(1);
     expect(result.data.repositories.map((r) => Boolean(r.icon))).toEqual([true, false]);
     expect(result.warnings).toEqual([expect.stringContaining("g/big.png"), expect.stringContaining("g/text.png")]);
+  });
+
+  it("embeds group icons from the group's path", async () => {
+    const result = await embedIcons(
+      report([repo("group/sub/app")]),
+      ["group.png", "group/sub.png", "other.png"],
+      reader({ "group.png": PNG, "group/sub.png": PNG }),
+    );
+    expect(result.embedded).toBe(0);
+    expect(result.embeddedGroups).toBe(2);
+    expect(Object.keys(result.data.groupIcons ?? {})).toEqual(["group", "group/sub"]);
+  });
+});
+
+describe("groupIcon", () => {
+  it("hotlinks GitLab groups until the CLI embedded icons", () => {
+    expect(groupIcon("group/sub", "gitlab", {})).toBe(
+      `https://gitlab.com/api/v4/groups/${encodeURIComponent("group/sub")}/avatar`,
+    );
+    expect(groupIcon("group", "gitlab", { platformUrl: "https://git.example.com" })).toBe(
+      "https://git.example.com/api/v4/groups/group/avatar",
+    );
+    expect(groupIcon("group", "gitlab", { embeddedIcons: true, groupIcons: { group: "data:x" } })).toBe("data:x");
+    expect(groupIcon("other", "gitlab", { embeddedIcons: true })).toBeUndefined();
+    expect(groupIcon("org", "github", {})).toBeUndefined();
   });
 });
 

@@ -16,6 +16,8 @@ export interface ReportData {
   platformUrl?: string;
   /** Set when the CLI embedded icons (`--icons`); the viewer then only shows `Repository.icon` and doesn't hotlink. */
   embeddedIcons?: boolean;
+  /** Group icons as data URLs by group path, when the CLI embedded icons. */
+  groupIcons?: Record<string, string>;
   problems: Problem[];
   repositories: Repository[];
 }
