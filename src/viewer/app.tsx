@@ -1,6 +1,7 @@
 import { useMemo } from "preact/hooks";
+import { type OpenChange, openChangesByUse } from "../report/changes.ts";
 import type { ReportData } from "../report/data.ts";
-import { type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
+import { type DepRef, type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
 import { href, type Route, useRoute } from "./router.ts";
 import { Overview } from "./views/overview.tsx";
 import { PackageView } from "./views/package.tsx";
@@ -13,6 +14,7 @@ export function App({ data }: { data: ReportData }) {
   const route = useRoute();
   const summary = useMemo(() => summarize(data), [data]);
   const packages = useMemo(() => packageIndex(data.repositories), [data]);
+  const changesFor = useMemo(() => openChangesByUse(data.repositories), [data]);
 
   return (
     <>
@@ -28,7 +30,7 @@ export function App({ data }: { data: ReportData }) {
         </nav>
       </header>
       <main class="page">
-        <Page data={data} route={route} summary={summary} packages={packages} />
+        <Page data={data} route={route} summary={summary} packages={packages} changesFor={changesFor} />
       </main>
       <footer class="footer muted">
         Generated {new Date(data.generatedAt).toLocaleString()} from a Renovate report by renovate-report-html.
@@ -63,11 +65,13 @@ function Page({
   route,
   summary,
   packages,
+  changesFor,
 }: {
   data: ReportData;
   route: Route;
   summary: Summary;
   packages: PackageUsage[];
+  changesFor: (ref: DepRef) => OpenChange[];
 }) {
   switch (route.name) {
     case "overview":
@@ -86,7 +90,11 @@ function Page({
       return <PackagesView packages={packages} filter={route} />;
     case "package": {
       const usage = packages.find((p) => p.id === route.id);
-      return usage ? <PackageView usage={usage} /> : <NotFound what={`package ${route.id}`} />;
+      return usage ? (
+        <PackageView usage={usage} changesFor={changesFor} platformUrl={data.platformUrl} />
+      ) : (
+        <NotFound what={`package ${route.id}`} />
+      );
     }
     case "problems":
       return <ProblemsView data={data} />;

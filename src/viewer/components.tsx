@@ -1,6 +1,8 @@
 import type { ComponentChildren } from "preact";
 import { useMemo, useState } from "preact/hooks";
+import type { OpenChange } from "../report/changes.ts";
 import type { Dep, Problem, Update } from "../report/data.ts";
+import { platformLinks } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
 import { href } from "./router.ts";
 
@@ -309,6 +311,18 @@ export function ExternalButton({
   return (
     <a class={`button ${primary ? "button-primary" : ""}`} href={href} target="_blank" rel="noreferrer">
       {children}
+    </a>
+  );
+}
+
+/** "#12", linked to the pull or merge request when we know the code host. */
+export function ChangeLink({ change, platformUrl }: { change: OpenChange; platformUrl?: string }) {
+  const { prNo, prTitle } = change.branch;
+  const links = platformLinks(change.repo, platformUrl);
+  if (!links) return <span title={prTitle}>#{prNo}</span>;
+  return (
+    <a href={links.change(prNo)} title={prTitle} target="_blank" rel="noreferrer">
+      #{prNo}
     </a>
   );
 }

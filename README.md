@@ -7,6 +7,7 @@ Turn a [Renovate](https://docs.renovatebot.com/) JSON report into one interactiv
 - Pending updates by type, skipped dependencies and Renovate's problems, at a glance
 - Every repository, down to each package file and dependency
 - Every package across repositories: who is on which version, with outliers marked
+- Open Renovate pull or merge requests per repository, and which ones update each package
 - Colour-coded dependency age, sortable tables, search, and a link for every view
 - One self-contained file: open it locally, attach it to a CI job, or publish it on Pages
 

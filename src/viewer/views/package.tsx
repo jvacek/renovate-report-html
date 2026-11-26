@@ -1,7 +1,10 @@
+import type { OpenChange } from "../../report/changes.ts";
+import { changeTerms } from "../../report/platform.ts";
 import { registryLink } from "../../report/registry.ts";
 import { type DepRef, type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
 import {
   Age,
+  ChangeLink,
   type Column,
   CurrentVersion,
   ExternalButton,
@@ -14,7 +17,7 @@ import {
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
 
-const columns: Column<DepRef>[] = [
+const baseColumns: Column<DepRef>[] = [
   {
     label: "Repository",
     sort: (r) => r.repo,
@@ -51,6 +54,21 @@ const columns: Column<DepRef>[] = [
   },
 ];
 
+function changesColumn(label: string, changesFor: (ref: DepRef) => OpenChange[], platformUrl?: string): Column<DepRef> {
+  return {
+    label,
+    descFirst: true,
+    sort: (r) => changesFor(r)[0]?.branch.prNo,
+    render: (r) =>
+      changesFor(r).map((change, i) => (
+        <span key={change.branch.branchName}>
+          {i > 0 && ", "}
+          <ChangeLink change={change} platformUrl={platformUrl} />
+        </span>
+      )),
+  };
+}
+
 function versionColumns(top: number, distinct: number): Column<VersionCount>[] {
   return [
     {
@@ -80,7 +98,25 @@ function versionColumns(top: number, distinct: number): Column<VersionCount>[] {
   ];
 }
 
-export function PackageView({ usage }: { usage: PackageUsage }) {
+export function PackageView({
+  usage,
+  changesFor,
+  platformUrl,
+}: {
+  usage: PackageUsage;
+  changesFor: (ref: DepRef) => OpenChange[];
+  platformUrl?: string;
+}) {
+  const changes = usage.usages.flatMap(changesFor);
+  const changeCount = new Set(changes.map((c) => `${c.repo.name}#${c.branch.prNo}`)).size;
+  const terms = changeTerms(changes[0]?.repo.platform);
+  const columns = changeCount
+    ? [
+        ...baseColumns.slice(0, 7),
+        changesColumn(`Open ${terms.short}`, changesFor, platformUrl),
+        ...baseColumns.slice(7),
+      ]
+    : baseColumns;
   const first = usage.usages[0]?.dep;
   const links = usage.usages.find(({ dep }) => dep.sourceUrl || dep.homepage || dep.changelogUrl)?.dep;
   const registry = first && registryLink(first);
@@ -117,6 +153,7 @@ export function PackageView({ usage }: { usage: PackageUsage }) {
         <Stat label="Uses" value={usage.usages.length} />
         <Stat label="Versions in use" value={versions.length} tone={versions.length > 1 ? "warn" : undefined} />
         {usage.latest && <Stat label="Newest available" value={usage.latest} />}
+        {changeCount > 0 && <Stat label={`Open Renovate ${terms.short}s`} value={changeCount} />}
       </div>
       <h2>Versions in use</h2>
       <SortableTable

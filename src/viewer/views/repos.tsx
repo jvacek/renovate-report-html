@@ -1,5 +1,7 @@
 import { useMemo, useState } from "preact/hooks";
+import { hasBranchData, openChanges } from "../../report/changes.ts";
 import type { Repository } from "../../report/data.ts";
+import { changeTerms } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import { Age, type Column, orderUpdateTypes, SortableTable, StalenessLegend, UpdateCounts } from "../components.tsx";
 import { href } from "../router.ts";
@@ -11,12 +13,21 @@ interface RepoRow {
   outdated: number;
   updatesByType: Record<string, number>;
   updates: number;
+  openChanges: number;
   medianAge?: number;
   oldestAge?: number;
 }
 
 function repoRow(repo: Repository): RepoRow {
-  const row: RepoRow = { repo, managers: repo.managers.length, deps: 0, outdated: 0, updatesByType: {}, updates: 0 };
+  const row: RepoRow = {
+    repo,
+    managers: repo.managers.length,
+    deps: 0,
+    outdated: 0,
+    updatesByType: {},
+    updates: 0,
+    openChanges: openChanges(repo).length,
+  };
   const ages: number[] = [];
   for (const { dep } of allDeps([repo])) {
     row.deps++;
@@ -34,7 +45,19 @@ function repoRow(repo: Repository): RepoRow {
   return row;
 }
 
-function columnsFor(updateTypes: string[]): Column<RepoRow>[] {
+/** `changesLabel` is unset when the report has no branch data, which hides the column. */
+function columnsFor(updateTypes: string[], changesLabel?: string): Column<RepoRow>[] {
+  const changes: Column<RepoRow>[] = changesLabel
+    ? [
+        {
+          label: changesLabel,
+          class: "num",
+          descFirst: true,
+          sort: (r) => r.openChanges,
+          render: (r) => r.openChanges || "",
+        },
+      ]
+    : [];
   return [
     {
       label: "Repository",
@@ -57,6 +80,7 @@ function columnsFor(updateTypes: string[]): Column<RepoRow>[] {
       sort: (r) => r.updates,
       render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
     },
+    ...changes,
     {
       label: "Median age",
       class: "num",
@@ -86,8 +110,12 @@ export function ReposView({ repositories }: { repositories: Repository[] }) {
   const rows = useMemo(() => repositories.map(repoRow), [repositories]);
   // One slot per update type that occurs anywhere, so chips line up across rows.
   const columns = useMemo(
-    () => columnsFor(orderUpdateTypes(rows.flatMap((r) => Object.keys(r.updatesByType)))),
-    [rows],
+    () =>
+      columnsFor(
+        orderUpdateTypes(rows.flatMap((r) => Object.keys(r.updatesByType))),
+        hasBranchData(repositories) ? `Open ${changeTerms(repositories[0]?.platform).short}s` : undefined,
+      ),
+    [rows, repositories],
   );
   const needle = filter.trim().toLowerCase();
   const shown = needle ? rows.filter((r) => r.repo.name.toLowerCase().includes(needle)) : rows;

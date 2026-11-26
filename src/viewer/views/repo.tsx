@@ -1,9 +1,11 @@
 import { useState } from "preact/hooks";
-import type { Branch, Dep, Repository } from "../../report/data.ts";
-import { type PlatformLinks, platformLinks } from "../../report/platform.ts";
+import { type OpenChange, openChanges } from "../../report/changes.ts";
+import type { Dep, Repository } from "../../report/data.ts";
+import { changeTerms, platformLinks } from "../../report/platform.ts";
 import { allDeps, packageId } from "../../report/stats.ts";
 import {
   Age,
+  ChangeLink,
   type Column,
   CurrentVersion,
   ExternalButton,
@@ -65,44 +67,41 @@ const depColumns: Column<Dep>[] = [
   },
 ];
 
-const branchColumns = (links?: PlatformLinks): Column<Branch>[] => [
-  {
-    label: "Branch",
-    sort: (b) => b.branchName,
-    render: (b) => <code>{b.branchName}</code>,
-  },
-  { label: "PR title", sort: (b) => b.prTitle, render: (b) => b.prTitle },
-  {
-    label: "PR",
-    class: "num",
-    sort: (b) => b.prNo ?? undefined,
-    render: (b) => {
-      if (!b.prNo) return "";
-      if (!links) return `#${b.prNo}`;
-      return (
-        <a href={links.change(b.prNo)} target="_blank" rel="noreferrer">
-          #{b.prNo}
-        </a>
-      );
+function changeColumns(term: string, platformUrl?: string): Column<OpenChange>[] {
+  return [
+    {
+      label: term,
+      class: "num",
+      descFirst: true,
+      sort: (c) => c.branch.prNo,
+      render: (c) => <ChangeLink change={c} platformUrl={platformUrl} />,
     },
-  },
-  {
-    label: "Result",
-    sort: (b) => b.result,
-    render: (b) => b.result && <span class="badge">{b.result}</span>,
-  },
-  {
-    label: "Upgrades",
-    render: (b) => (
-      <span class="badges">
-        {orderUpdateTypes(b.upgrades.map((u) => u.updateType ?? "unknown")).map((type) => (
-          <UpdateBadge key={type} type={type} />
-        ))}{" "}
-        {plural(b.upgrades.length, "upgrade")}
-      </span>
-    ),
-  },
-];
+    { label: "Title", sort: (c) => c.branch.prTitle, render: (c) => c.branch.prTitle },
+    {
+      label: "Updates",
+      descFirst: true,
+      sort: (c) => c.branch.upgrades.length,
+      render: (c) => (
+        <span class="badges">
+          {orderUpdateTypes(c.branch.upgrades.map((u) => u.updateType ?? "unknown")).map((type) => (
+            <UpdateBadge key={type} type={type} />
+          ))}{" "}
+          {plural(c.branch.upgrades.length, "update")}
+        </span>
+      ),
+    },
+    {
+      label: "Branch",
+      sort: (c) => c.branch.branchName,
+      render: (c) => (
+        <>
+          <code>{c.branch.branchName}</code>
+          {c.branch.baseBranch && <span class="muted"> into {c.branch.baseBranch}</span>}
+        </>
+      ),
+    },
+  ];
+}
 
 function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   if (onlyUpdates && dep.updates.length === 0) return false;
@@ -113,6 +112,8 @@ function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
 
 export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?: string }) {
   const links = platformLinks(repo, platformUrl);
+  const terms = changeTerms(repo.platform);
+  const changes = openChanges(repo);
   const [filter, setFilter] = useState("");
   const [onlyUpdates, setOnlyUpdates] = useState(false);
   const deps = [...allDeps([repo])].map((ref) => ref.dep);
@@ -153,6 +154,26 @@ export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?
         <section class="callout callout-warn">
           <h2>Problems</h2>
           <ProblemList problems={repo.problems} />
+        </section>
+      )}
+
+      {repo.platform !== "local" && (
+        <section>
+          <h2>Open Renovate {terms.long}s</h2>
+          {repo.branches.length === 0 ? (
+            <p class="muted">
+              No {terms.long} data. Renovate leaves it out when run with <code>--dry-run=lookup</code>, or when it has
+              no branches for this repository.
+            </p>
+          ) : (
+            <SortableTable
+              columns={changeColumns(terms.short, platformUrl)}
+              rows={changes}
+              rowKey={(c) => c.branch.branchName}
+              initialSort={{ column: 0, desc: true }}
+              empty={`No open Renovate ${terms.long}s.`}
+            />
+          )}
         </section>
       )}
 
@@ -217,26 +238,6 @@ export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?
             </section>
           );
         })}
-      </section>
-
-      <section>
-        <h2>Branches</h2>
-        {repo.branches.length === 0 ? (
-          <p class="muted">
-            No branch data. Renovate leaves this empty when run with <code>--dry-run=lookup</code>, or when no branches
-            are needed.
-          </p>
-        ) : (
-          <details>
-            <summary>{plural(repo.branches.length, "branch", "branches")} Renovate would create or update</summary>
-            <SortableTable
-              columns={branchColumns(links)}
-              rows={repo.branches}
-              rowKey={(b) => b.branchName}
-              initialSort={{ column: 0, desc: false }}
-            />
-          </details>
-        )}
       </section>
     </>
   );
