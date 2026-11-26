@@ -1,6 +1,11 @@
 # renovate-report-html
 
+[![npm](https://img.shields.io/npm/v/renovate-report-html)](https://www.npmjs.com/package/renovate-report-html)
+[![License: MIT](https://img.shields.io/npm/l/renovate-report-html)](LICENSE)
+
 Turn a [Renovate](https://docs.renovatebot.com/) JSON report into one interactive HTML page. Think coverage report, but for dependency updates across all your repositories.
+
+See which dependencies are outdated, which repositories have drifted to different versions of the same package, and which Renovate pull requests are still open, for a whole GitHub organisation or GitLab group in one place. It runs as a CLI in any CI pipeline and needs no server.
 
 **[See the demo](https://jvacek.github.io/renovate-report-html/demo/)**
 
