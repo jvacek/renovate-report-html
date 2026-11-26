@@ -5,6 +5,7 @@ import {
   type Column,
   CurrentVersion,
   ExternalButton,
+  RepoList,
   SortableTable,
   StalenessLegend,
   Stat,
@@ -74,15 +75,7 @@ function versionColumns(top: number, distinct: number): Column<VersionCount>[] {
       label: "Repositories",
       descFirst: true,
       sort: (v) => v.repos.length,
-      render: (v) => (
-        <span class="badges">
-          {v.repos.map((repo) => (
-            <a key={repo} href={href.repo(repo)}>
-              {repo}
-            </a>
-          ))}
-        </span>
-      ),
+      render: (v) => <RepoList repos={v.repos} />,
     },
   ];
 }

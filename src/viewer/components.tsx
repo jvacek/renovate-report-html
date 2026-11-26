@@ -2,6 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import type { Dep, Problem, Update } from "../report/data.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
+import { href } from "./router.ts";
 
 export function formatAge(days: number): string {
   if (days < 60) return `${days} d`;
@@ -305,5 +306,35 @@ export function ExternalButton({
     <a class={`button ${primary ? "button-primary" : ""}`} href={href} target="_blank" rel="noreferrer">
       {children}
     </a>
+  );
+}
+
+const RepoItems = ({ repos }: { repos: string[] }) => (
+  <ul>
+    {repos.map((repo) => (
+      <li key={repo}>
+        <a href={href.repo(repo)}>{repo}</a>
+      </li>
+    ))}
+  </ul>
+);
+
+/**
+ * Bulleted repository links. Past `limit`, the rest sit in a <details>, which keeps
+ * them reachable by find-in-page while collapsed.
+ */
+export function RepoList({ repos, limit = 5 }: { repos: string[]; limit?: number }) {
+  const sorted = [...repos].sort((a, b) => a.localeCompare(b));
+  const rest = sorted.slice(limit);
+  return (
+    <div class="repo-list">
+      <RepoItems repos={sorted.slice(0, limit)} />
+      {rest.length > 0 && (
+        <details>
+          <summary>Show {rest.length} more</summary>
+          <RepoItems repos={rest} />
+        </details>
+      )}
+    </div>
   );
 }
