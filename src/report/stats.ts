@@ -72,7 +72,7 @@ export interface PackageUsage {
   maxAgeInDays?: number;
 }
 
-export function packageId(dep: Dep): string {
+export function packageId(dep: Pick<Dep, "datasource" | "packageName" | "name">): string {
   return `${dep.datasource ?? "unknown"}:${dep.packageName ?? dep.name}`;
 }
 

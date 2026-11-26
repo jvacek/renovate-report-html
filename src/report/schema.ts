@@ -63,6 +63,7 @@ export const packageFileSchema = z.object({
 export const branchUpgradeSchema = z.object({
   depName: optionalString,
   packageName: optionalString,
+  datasource: optionalString,
   manager: optionalString,
   packageFile: optionalString,
   currentVersion: optionalString,

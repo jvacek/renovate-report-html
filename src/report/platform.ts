@@ -8,6 +8,11 @@ export interface PlatformLinks {
   change: (number: number) => string;
 }
 
+/** What the platform calls a change request: GitLab has merge requests, the rest pull requests. */
+export function changeTerms(platform?: string): { short: string; long: string } {
+  return platform === "gitlab" ? { short: "MR", long: "merge request" } : { short: "PR", long: "pull request" };
+}
+
 const DEFAULT_URLS: Record<string, string> = {
   github: "https://github.com",
   gitlab: "https://gitlab.com",
