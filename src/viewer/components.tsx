@@ -2,6 +2,7 @@ import type { ComponentChildren } from "preact";
 import { useMemo, useRef, useState } from "preact/hooks";
 import type { OpenChange } from "../report/changes.ts";
 import type { Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
+import { tokenizeJson } from "../report/json-tokens.ts";
 import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
 import { href } from "./router.ts";
@@ -118,7 +119,9 @@ export function ProblemList({ problems }: { problems: Problem[] }) {
 /** A one-line summary of a JSON payload that opens the full, pretty-printed JSON in a modal. */
 function PayloadButton({ payload }: { payload: Payload }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const tokens = useMemo(() => (open ? tokenizeJson(payload.json) : []), [open, payload.json]);
   const copy = () =>
     navigator.clipboard.writeText(payload.json).then(
       () => setCopied(true),
@@ -126,7 +129,14 @@ function PayloadButton({ payload }: { payload: Payload }) {
     );
   return (
     <>
-      <button type="button" class="payload-open" onClick={() => dialog.current?.showModal()}>
+      <button
+        type="button"
+        class="payload-open"
+        onClick={() => {
+          setOpen(true);
+          dialog.current?.showModal();
+        }}
+      >
         <code class="payload-summary">{payload.summary}</code>
         <span class="payload-hint">Show JSON</span>
       </button>
@@ -137,7 +147,10 @@ function PayloadButton({ payload }: { payload: Payload }) {
         aria-label={payload.key}
         // A click on the dialog element itself, not its content, is a click on the backdrop.
         onClick={(event) => event.target === event.currentTarget && event.currentTarget.close()}
-        onClose={() => setCopied(false)}
+        onClose={() => {
+          setOpen(false);
+          setCopied(false);
+        }}
       >
         <header>
           <code>{payload.key}</code>
@@ -148,7 +161,17 @@ function PayloadButton({ payload }: { payload: Payload }) {
             Close
           </button>
         </header>
-        <pre>{payload.json}</pre>
+        <pre>
+          {tokens.map((token, i) =>
+            token.kind ? (
+              <span key={i} class={`json-${token.kind}`}>
+                {token.text}
+              </span>
+            ) : (
+              token.text
+            ),
+          )}
+        </pre>
       </dialog>
     </>
   );

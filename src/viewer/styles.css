@@ -670,6 +670,22 @@ th {
   word-break: break-word;
 }
 
+.json-key {
+  color: var(--info-fg);
+}
+
+.json-string {
+  color: var(--fresh);
+}
+
+.json-number {
+  color: var(--stale);
+}
+
+.json-literal {
+  color: var(--digest);
+}
+
 .manager h3 {
   border-bottom: 1px solid var(--border);
   padding-bottom: 0.3rem;
