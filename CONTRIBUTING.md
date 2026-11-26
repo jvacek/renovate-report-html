@@ -28,3 +28,7 @@ There is one fixture per supported platform (GitHub, GitLab, local); tests run a
 ```sh
 RENOVATE_TOKEN=$(gh auth token) scripts/generate-report.sh fixtures/github-report.json github lookup 44.263.5
 ```
+
+## Releasing
+
+See [RELEASING.md](RELEASING.md).

@@ -30,9 +30,6 @@ This writes `public/index.html`. Requires Node 22 or later.
 
 Supported and tested, including a weekly check against the latest Renovate release: **GitHub**, **GitLab** and **local** checkouts. Setup guides with ready-to-use CI pipelines: [GitHub](docs/github.md), [GitLab](docs/gitlab.md), [local](docs/local.md). Reports from other Renovate platforms may work but aren't tested.
 
-> [!NOTE]
-> Not on npm yet. Until then, build it from source (see [CONTRIBUTING.md](CONTRIBUTING.md)) and run `node dist/cli.mjs` instead.
-
 > [!WARNING]
 > Renovate's report format is experimental and can change between minor releases. If a Renovate version breaks the page, the CLI names the field that changed; please [open an issue](https://github.com/jvacek/renovate-report-html/issues) with that output.
 
