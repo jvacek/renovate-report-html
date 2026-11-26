@@ -79,7 +79,10 @@ export function PackagesView({ packages, filter }: { packages: PackageUsage[]; f
   const datasourceCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const p of packages) counts.set(p.datasource ?? "unknown", (counts.get(p.datasource ?? "unknown") ?? 0) + 1);
-    return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    // Alphabetical, so a datasource is easy to find; "unknown" goes last.
+    return [...counts].sort(
+      (a, b) => Number(a[0] === "unknown") - Number(b[0] === "unknown") || a[0].localeCompare(b[0]),
+    );
   }, [packages]);
 
   const needle = filter.query.trim().toLowerCase();
