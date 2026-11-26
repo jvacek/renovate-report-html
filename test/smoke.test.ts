@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Browser } from "happy-dom";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import pkg from "../package.json" with { type: "json" };
 
 const root = new URL("..", import.meta.url).pathname;
 const outDir = mkdtempSync(join(tmpdir(), "renovate-report-html-"));
@@ -55,6 +56,9 @@ describe("rendered page", () => {
     expect(page.console.readAsString()).toBe("");
     expect(page.document.querySelector("h1")?.textContent).toBe("Overview");
     expect(page.document.body.textContent).toContain("527");
+    const footer = page.document.querySelector("footer");
+    expect(footer?.textContent).toContain(`v${pkg.version}`);
+    expect(footer?.querySelector("a")?.getAttribute("href")).toBe("https://github.com/jvacek/renovate-report-html");
     await page.close();
   });
 

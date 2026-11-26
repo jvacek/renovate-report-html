@@ -3,9 +3,12 @@ import preact from "@preact/preset-vite";
 import * as simpleIcons from "simple-icons";
 import { defineConfig, type Plugin } from "vite";
 import { viteSingleFile } from "vite-plugin-singlefile";
+import pkg from "./package.json" with { type: "json" };
 import { DATASOURCE_ICONS } from "./src/viewer/datasource-icons.ts";
 
 const repoRoot = fileURLToPath(new URL(".", import.meta.url));
+/** "git+https://github.com/owner/repo.git" -> "https://github.com/owner/repo" */
+const repoUrl = pkg.repository.url.replace(/^git\+/, "").replace(/\.git$/, "");
 
 /** `virtual:datasource-icons`: datasource -> { path, hex }, without the rest of each Simple Icons object. */
 function datasourceIcons(): Plugin {
@@ -34,7 +37,11 @@ export default defineConfig(({ command }) => ({
   root: "src/viewer",
   // True only under the dev server. Not import.meta.env.DEV: that follows NODE_ENV,
   // so a build under NODE_ENV=test (as in Vitest) would bundle the fixtures.
-  define: { __DEV_SERVER__: JSON.stringify(command === "serve") },
+  define: {
+    __DEV_SERVER__: JSON.stringify(command === "serve"),
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __REPO_URL__: JSON.stringify(repoUrl),
+  },
   plugins: [datasourceIcons(), preact(), viteSingleFile({ removeViteModuleLoader: true })],
   build: {
     outDir: fileURLToPath(new URL("dist/viewer", import.meta.url)),

@@ -33,7 +33,8 @@ export function App({ data }: { data: ReportData }) {
         <Page data={data} route={route} summary={summary} packages={packages} changesFor={changesFor} />
       </main>
       <footer class="footer muted">
-        Generated {new Date(data.generatedAt).toLocaleString()} from a Renovate report by renovate-report-html.
+        Generated {new Date(data.generatedAt).toLocaleString()} from a Renovate report by{" "}
+        <a href={__REPO_URL__}>renovate-report-html</a> v{__APP_VERSION__}.
       </footer>
     </>
   );
