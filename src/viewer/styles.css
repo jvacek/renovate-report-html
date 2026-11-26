@@ -1,57 +1,39 @@
 :root {
+  /* Follows the system unless the theme switcher pins a scheme on the color-scheme meta tag. */
   color-scheme: light dark;
-  --bg: #ffffff;
-  --bg-soft: #f5f6f8;
-  --fg: #1d2129;
-  --muted: #5f6673;
-  --border: #dde1e7;
-  --link: #1a5fb4;
-  --accent: #1a5fb4;
-  --warn-bg: #fff6e0;
-  --warn-border: #e6b84c;
-  --warn-fg: #7a5200;
-  --error-bg: #fdeceb;
-  --error-fg: #a2231d;
-  --info-bg: #e8f1fb;
-  --info-fg: #1a5fb4;
-  --fresh: #1f8a4c;
-  --aging: #8a7a00;
-  --stale: #c26100;
-  --ancient: #c0262d;
-  --major: #c0262d;
-  --minor: #c26100;
-  --patch: #1f8a4c;
-  --digest: #6a4bb8;
-  --other: #5f6673;
+
+  --bg: light-dark(#ffffff, #15171b);
+  --bg-soft: light-dark(#f5f6f8, #1e2127);
+  --fg: light-dark(#1d2129, #e4e6ea);
+  --muted: light-dark(#5f6673, #9aa1ad);
+  --border: light-dark(#dde1e7, #2f343c);
+  --link: light-dark(#1a5fb4, #78aef0);
+  --accent: light-dark(#1a5fb4, #78aef0);
+  --warn-bg: light-dark(#fff6e0, #2e2612);
+  --warn-border: light-dark(#e6b84c, #8a6a1c);
+  --warn-fg: light-dark(#7a5200, #f0c766);
+  --error-bg: light-dark(#fdeceb, #34191a);
+  --error-fg: light-dark(#a2231d, #f2908b);
+  --info-bg: light-dark(#e8f1fb, #172536);
+  --info-fg: light-dark(#1a5fb4, #78aef0);
+  --fresh: light-dark(#1f8a4c, #4cc27c);
+  --aging: light-dark(#8a7a00, #d6c24a);
+  --stale: light-dark(#c26100, #f0954a);
+  --ancient: light-dark(#c0262d, #f2716f);
+  --major: light-dark(#c0262d, #f2716f);
+  --minor: light-dark(#c26100, #f0954a);
+  --patch: light-dark(#1f8a4c, #4cc27c);
+  --digest: light-dark(#6a4bb8, #a78bf0);
+  --other: light-dark(#5f6673, #9aa1ad);
   --radius: 6px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171b;
-    --bg-soft: #1e2127;
-    --fg: #e4e6ea;
-    --muted: #9aa1ad;
-    --border: #2f343c;
-    --link: #78aef0;
-    --accent: #78aef0;
-    --warn-bg: #2e2612;
-    --warn-border: #8a6a1c;
-    --warn-fg: #f0c766;
-    --error-bg: #34191a;
-    --error-fg: #f2908b;
-    --info-bg: #172536;
-    --info-fg: #78aef0;
-    --fresh: #4cc27c;
-    --aging: #d6c24a;
-    --stale: #f0954a;
-    --ancient: #f2716f;
-    --major: #f2716f;
-    --minor: #f0954a;
-    --patch: #4cc27c;
-    --digest: #a78bf0;
-    --other: #9aa1ad;
+  &:has(> head > meta[name="color-scheme"][content="light"]) {
+    color-scheme: light;
+  }
+
+  &:has(> head > meta[name="color-scheme"][content="dark"]) {
+    color-scheme: dark;
   }
 }
 
@@ -138,6 +120,52 @@ h3 {
 .topbar nav a.active {
   background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 2px;
+  margin: 0 0 0 auto;
+  min-inline-size: 0;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.theme-switcher button {
+  display: grid;
+  place-items: center;
+  padding: 0.3rem;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+}
+
+.theme-switcher button:hover {
+  color: var(--fg);
+}
+
+.theme-switcher button[aria-pressed="true"] {
+  color: var(--fg);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.theme-switcher button:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.theme-switcher svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .nav-count {

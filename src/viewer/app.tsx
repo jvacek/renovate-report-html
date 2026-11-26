@@ -3,6 +3,7 @@ import { type OpenChange, openChangesByUse } from "../report/changes.ts";
 import type { ReportData } from "../report/data.ts";
 import { type DepRef, type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
 import { href, type Route, useRoute } from "./router.ts";
+import { ThemeSwitcher } from "./theme-switcher.tsx";
 import { Overview } from "./views/overview.tsx";
 import { PackageView } from "./views/package.tsx";
 import { PackagesView } from "./views/packages.tsx";
@@ -28,6 +29,7 @@ export function App({ data }: { data: ReportData }) {
           <NavLink route={route} to="packages" label="Packages" />
           <NavLink route={route} to="problems" label="Problems" count={summary.problems} />
         </nav>
+        <ThemeSwitcher />
       </header>
       <main class="page">
         <Page data={data} route={route} summary={summary} packages={packages} changesFor={changesFor} />

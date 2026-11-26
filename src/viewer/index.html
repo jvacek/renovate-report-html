@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Apply a saved light/dark choice before first paint. Same key and values as theme.ts. -->
+    <script>
+      try {
+        const scheme = localStorage.getItem("renovate-report-html:color-scheme");
+        if (scheme === "light" || scheme === "dark") document.querySelector('meta[name="color-scheme"]').content = scheme;
+      } catch {}
+    </script>
     <meta name="text-scale" content="scale" />
     <meta name="generator" content="renovate-report-html" />
     <title>Renovate report</title>
