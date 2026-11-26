@@ -9,15 +9,14 @@ interface PackageRow {
   versions: VersionCount[];
 }
 
-/** Versions with use counts. When there is more than one, the less common ones are marked as outliers. */
+/** Versions with use counts, outliers highlighted. */
 export function VersionChips({ versions }: { versions: VersionCount[] }) {
-  const top = versions[0]?.uses ?? 0;
   return (
     <span class="version-chips">
       {versions.map((v) => (
         <span
           key={v.version}
-          class={`version-chip ${versions.length > 1 && v.uses < top ? "outlier" : ""}`}
+          class={`version-chip ${v.outlier ? "outlier" : ""}`}
           title={`${v.uses} ${v.uses === 1 ? "use" : "uses"} in ${v.repos.join(", ")}`}
         >
           <span class="version">{v.version}</span>

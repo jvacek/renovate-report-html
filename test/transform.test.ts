@@ -142,6 +142,32 @@ describe("packageIndex", () => {
     expect(counts.at(-1)?.repos).toEqual(["docker-library/hello-world"]);
   });
 
+  it("marks less common versions as outliers, but never the latest", () => {
+    const dep = (version: string, newVersion?: string) => ({
+      depName: "pkg",
+      datasource: "npm",
+      currentVersion: version,
+      updates: newVersion ? [{ newVersion, updateType: "minor" }] : [],
+    });
+    const report = parseReport({
+      repositories: {
+        "a/b": {
+          packageFiles: {
+            npm: [{ packageFile: "p", deps: [dep("1.0.0", "2.0.0"), dep("1.0.0", "2.0.0"), dep("1.1.0", "2.0.0")] }],
+          },
+        },
+        "c/d": { packageFiles: { npm: [{ packageFile: "p", deps: [dep("2.0.0")] }] } },
+      },
+    });
+    const [pkg] = packageIndex(toReportData(report).repositories);
+    const outliers = pkg ? versionCounts(pkg).map((v) => [v.version, v.outlier]) : [];
+    expect(outliers).toEqual([
+      ["1.0.0", false],
+      ["2.0.0", false],
+      ["1.1.0", true],
+    ]);
+  });
+
   it("marks uses behind the newest version in use", () => {
     const checkout = packages.find((p) => p.id === "github-tags:actions/checkout");
     const newest = checkout && newestInUse(checkout);

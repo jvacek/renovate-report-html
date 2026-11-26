@@ -85,34 +85,32 @@ function changesColumn(label: string, changesFor: (ref: DepRef) => OpenChange[],
   };
 }
 
-function versionColumns(top: number, distinct: number): Column<VersionCount>[] {
-  return [
-    {
-      label: "Version",
-      sort: (v) => v.version,
-      render: (v) => (
-        <span class="version">
-          {v.version}
-          {distinct > 1 && v.uses < top && <span class="badge outlier-badge">outlier</span>}
-        </span>
-      ),
-    },
-    { label: "Uses", class: "num", descFirst: true, sort: (v) => v.uses, render: (v) => v.uses },
-    {
-      label: "Age",
-      class: "num",
-      descFirst: true,
-      sort: (v) => v.ageInDays,
-      render: (v) => <Age days={v.ageInDays} />,
-    },
-    {
-      label: "Repositories",
-      descFirst: true,
-      sort: (v) => v.repos.length,
-      render: (v) => <RepoList repos={v.repos} />,
-    },
-  ];
-}
+const versionColumns: Column<VersionCount>[] = [
+  {
+    label: "Version",
+    sort: (v) => v.version,
+    render: (v) => (
+      <span class="version">
+        {v.version}
+        {v.outlier && <span class="badge outlier-badge">outlier</span>}
+      </span>
+    ),
+  },
+  { label: "Uses", class: "num", descFirst: true, sort: (v) => v.uses, render: (v) => v.uses },
+  {
+    label: "Age",
+    class: "num",
+    descFirst: true,
+    sort: (v) => v.ageInDays,
+    render: (v) => <Age days={v.ageInDays} />,
+  },
+  {
+    label: "Repositories",
+    descFirst: true,
+    sort: (v) => v.repos.length,
+    render: (v) => <RepoList repos={v.repos} />,
+  },
+];
 
 export function PackageView({
   usage,
@@ -170,7 +168,7 @@ export function PackageView({
       </div>
       <h2>Versions in use</h2>
       <SortableTable
-        columns={versionColumns(versions[0]?.uses ?? 0, versions.length)}
+        columns={versionColumns}
         rows={versions}
         rowKey={(v) => v.version}
         initialSort={{ column: 1, desc: true }}

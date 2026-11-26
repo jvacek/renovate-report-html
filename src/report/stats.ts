@@ -129,6 +129,8 @@ export interface VersionCount {
   uses: number;
   repos: string[];
   ageInDays?: number;
+  /** Less common than the most used version and not the newest available one. */
+  outlier: boolean;
 }
 
 /** The version a use is on, as shown and grouped in the package views. */
@@ -157,11 +159,17 @@ export function versionCounts(usage: PackageUsage): VersionCount[] {
     if (version === undefined) continue;
     let entry = byVersion.get(version);
     if (!entry) {
-      entry = { version, uses: 0, repos: [], ageInDays: dep.currentVersionAgeInDays };
+      entry = { version, uses: 0, repos: [], ageInDays: dep.currentVersionAgeInDays, outlier: false };
       byVersion.set(version, entry);
     }
     entry.uses++;
     if (!entry.repos.includes(repo)) entry.repos.push(repo);
   }
-  return [...byVersion.values()].sort((a, b) => b.uses - a.uses || compareVersions(b.version, a.version));
+  const counts = [...byVersion.values()].sort((a, b) => b.uses - a.uses || compareVersions(b.version, a.version));
+  const top = counts[0]?.uses ?? 0;
+  for (const v of counts) {
+    const isLatest = usage.latest !== undefined && compareVersions(v.version, usage.latest) >= 0;
+    v.outlier = v.uses < top && !isLatest;
+  }
+  return counts;
 }
