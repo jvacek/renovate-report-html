@@ -1,10 +1,12 @@
 import { useState } from "preact/hooks";
 import type { Branch, Dep, Repository } from "../../report/data.ts";
+import { type PlatformLinks, platformLinks } from "../../report/platform.ts";
 import { allDeps, packageId } from "../../report/stats.ts";
 import {
   Age,
   type Column,
   CurrentVersion,
+  ExternalButton,
   orderUpdateTypes,
   ProblemList,
   plural,
@@ -63,7 +65,7 @@ const depColumns: Column<Dep>[] = [
   },
 ];
 
-const branchColumns: Column<Branch>[] = [
+const branchColumns = (links?: PlatformLinks): Column<Branch>[] => [
   {
     label: "Branch",
     sort: (b) => b.branchName,
@@ -74,7 +76,15 @@ const branchColumns: Column<Branch>[] = [
     label: "PR",
     class: "num",
     sort: (b) => b.prNo ?? undefined,
-    render: (b) => (b.prNo ? `#${b.prNo}` : ""),
+    render: (b) => {
+      if (!b.prNo) return "";
+      if (!links) return `#${b.prNo}`;
+      return (
+        <a href={links.change(b.prNo)} target="_blank" rel="noreferrer">
+          #{b.prNo}
+        </a>
+      );
+    },
   },
   {
     label: "Result",
@@ -101,7 +111,8 @@ function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   return [dep.name, dep.packageName, dep.depType, dep.datasource].some((v) => v?.toLowerCase().includes(needle));
 }
 
-export function RepoView({ repo }: { repo: Repository }) {
+export function RepoView({ repo, platformUrl }: { repo: Repository; platformUrl?: string }) {
+  const links = platformLinks(repo, platformUrl);
   const [filter, setFilter] = useState("");
   const [onlyUpdates, setOnlyUpdates] = useState(false);
   const deps = [...allDeps([repo])].map((ref) => ref.dep);
@@ -121,6 +132,14 @@ export function RepoView({ repo }: { repo: Repository }) {
       </p>
       <h1>{repo.name}</h1>
       {meta.some(Boolean) && <p class="muted">{meta.filter(Boolean).join(" · ")}</p>}
+      {links && (
+        <p class="actions">
+          <ExternalButton href={links.repo} primary>
+            Open repository
+          </ExternalButton>
+          <ExternalButton href={links.changes}>{links.changesLabel}</ExternalButton>
+        </p>
+      )}
       <div class="stats">
         <Stat label="Managers" value={repo.managers.length} />
         <Stat label="Dependencies" value={deps.length} />
@@ -211,7 +230,7 @@ export function RepoView({ repo }: { repo: Repository }) {
           <details>
             <summary>{plural(repo.branches.length, "branch", "branches")} Renovate would create or update</summary>
             <SortableTable
-              columns={branchColumns}
+              columns={branchColumns(links)}
               rows={repo.branches}
               rowKey={(b) => b.branchName}
               initialSort={{ column: 0, desc: false }}
