@@ -1,6 +1,6 @@
 {
   "name": "renovate-report-html",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Turn a Renovate JSON report into a self-contained HTML dashboard of outdated dependencies, versions and update PRs across all your GitHub and GitLab repositories",
   "keywords": [
     "renovate",
