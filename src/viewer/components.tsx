@@ -439,32 +439,30 @@ export function RepoLink({ name, report, hidePath }: { name: string; report: Rep
   );
 }
 
-const RepoItems = ({ repos }: { repos: string[] }) => (
+const RepoItems = ({ repos, report }: { repos: string[]; report: ReportData }) => (
   <ul>
     {repos.map((repo) => (
       <li key={repo}>
-        <a href={href.repo(repo)}>
-          <RepoName name={repo} />
-        </a>
+        <RepoLink name={repo} report={report} />
       </li>
     ))}
   </ul>
 );
 
 /**
- * Bulleted repository links. Past `limit`, the rest sit in a <details>, which keeps
+ * Repository links, one per line. Past `limit`, the rest sit in a <details>, which keeps
  * them reachable by find-in-page while collapsed.
  */
-export function RepoList({ repos, limit = 5 }: { repos: string[]; limit?: number }) {
+export function RepoList({ repos, report, limit = 5 }: { repos: string[]; report: ReportData; limit?: number }) {
   const sorted = repos.toSorted((a, b) => a.localeCompare(b));
   const rest = sorted.slice(limit);
   return (
     <div class="repo-list">
-      <RepoItems repos={sorted.slice(0, limit)} />
+      <RepoItems repos={sorted.slice(0, limit)} report={report} />
       {rest.length > 0 && (
         <details>
           <summary>Show {rest.length} more</summary>
-          <RepoItems repos={rest} />
+          <RepoItems repos={rest} report={report} />
         </details>
       )}
     </div>

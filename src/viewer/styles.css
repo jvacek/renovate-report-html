@@ -822,6 +822,16 @@ h1 .repo-avatar {
   padding-left: 1.1em;
 }
 
+/* The icons mark each item already. */
+.repo-list ul:has(.repo-avatar) {
+  list-style: none;
+  padding-left: 0;
+}
+
+.repo-list ul:has(.repo-avatar) li + li {
+  margin-top: 0.2rem;
+}
+
 .repo-list details summary {
   cursor: pointer;
   color: var(--link);

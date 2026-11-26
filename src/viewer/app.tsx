@@ -90,7 +90,7 @@ function Page({
     case "package": {
       const usage = packages.find((p) => p.id === route.id);
       return usage ? (
-        <PackageView usage={usage} changesFor={changesFor} platformUrl={data.platformUrl} />
+        <PackageView usage={usage} changesFor={changesFor} report={data} />
       ) : (
         <NotFound what={`package ${route.id}`} />
       );

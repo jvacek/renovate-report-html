@@ -1,4 +1,5 @@
 import type { OpenChange } from "../../report/changes.ts";
+import type { ReportData } from "../../report/data.ts";
 import { changeTerms } from "../../report/platform.ts";
 import { registryLink } from "../../report/registry.ts";
 import {
@@ -15,8 +16,8 @@ import {
   type Column,
   CurrentVersion,
   ExternalButton,
+  RepoLink,
   RepoList,
-  RepoName,
   SortableTable,
   StalenessLegend,
   Stat,
@@ -25,16 +26,12 @@ import {
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
 
-function baseColumns(newest: string | undefined): Column<DepRef>[] {
+function baseColumns(newest: string | undefined, report: ReportData): Column<DepRef>[] {
   return [
     {
       label: "Repository",
       sort: (r) => r.repo,
-      render: (r) => (
-        <a href={href.repo(r.repo)}>
-          <RepoName name={r.repo} />
-        </a>
-      ),
+      render: (r) => <RepoLink name={r.repo} report={report} />,
     },
     { label: "Manager", sort: (r) => r.manager, render: (r) => r.manager },
     {
@@ -90,7 +87,7 @@ function changesColumn(label: string, changesFor: (ref: DepRef) => OpenChange[],
   };
 }
 
-const versionColumns: Column<VersionCount>[] = [
+const versionColumns = (report: ReportData): Column<VersionCount>[] => [
   {
     label: "Version",
     sort: (v) => v.version,
@@ -113,25 +110,25 @@ const versionColumns: Column<VersionCount>[] = [
     label: "Repositories",
     descFirst: true,
     sort: (v) => v.repos.length,
-    render: (v) => <RepoList repos={v.repos} />,
+    render: (v) => <RepoList repos={v.repos} report={report} />,
   },
 ];
 
 export function PackageView({
   usage,
   changesFor,
-  platformUrl,
+  report,
 }: {
   usage: PackageUsage;
   changesFor: (ref: DepRef) => OpenChange[];
-  platformUrl?: string;
+  report: ReportData;
 }) {
   const changes = usage.usages.flatMap(changesFor);
   const changeCount = new Set(changes.map((c) => `${c.repo.name}#${c.branch.prNo}`)).size;
   const terms = changeTerms(changes[0]?.repo.platform);
-  const base = baseColumns(newestInUse(usage));
+  const base = baseColumns(newestInUse(usage), report);
   const columns = changeCount
-    ? [...base.slice(0, 7), changesColumn(`Open ${terms.short}`, changesFor, platformUrl), ...base.slice(7)]
+    ? [...base.slice(0, 7), changesColumn(`Open ${terms.short}`, changesFor, report.platformUrl), ...base.slice(7)]
     : base;
   const first = usage.usages[0]?.dep;
   const links = usage.usages.find(({ dep }) => dep.sourceUrl || dep.homepage || dep.changelogUrl)?.dep;
@@ -173,7 +170,7 @@ export function PackageView({
       </div>
       <h2>Versions in use</h2>
       <SortableTable
-        columns={versionColumns}
+        columns={versionColumns(report)}
         rows={versions}
         rowKey={(v) => v.version}
         initialSort={{ column: 1, desc: true }}
