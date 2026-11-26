@@ -3,16 +3,19 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { toReportData } from "./report/data.ts";
+import { platformWebUrl } from "./report/platform.ts";
 import { renderHtml } from "./report/render.ts";
 import { parseReport, ReportFormatError } from "./report/schema.ts";
 
-const USAGE = `Usage: renovate-report-html <report.json> [-o <dir>] [--title <title>]
+const USAGE = `Usage: renovate-report-html <report.json> [-o <dir>] [--title <title>] [--endpoint <url>]
 
 Turn a Renovate JSON report (reportType=file) into a self-contained HTML page.
 
 Options:
   -o, --output <dir>   Output directory (default: current directory). Writes index.html.
   -t, --title <title>  Page title (default: "Renovate report").
+  --endpoint <url>     Self-hosted GitHub or GitLab, as passed to Renovate's --endpoint
+                       or as the web URL. Used for repository and pull request links.
   -h, --help           Show this help.`;
 
 /** Resolved next to the bundled CLI: dist/cli.mjs reads dist/viewer/index.html. */
@@ -34,6 +37,7 @@ async function main(argv: string[]): Promise<number> {
     options: {
       output: { type: "string", short: "o", default: "." },
       title: { type: "string", short: "t" },
+      endpoint: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -47,8 +51,17 @@ async function main(argv: string[]): Promise<number> {
     return 2;
   }
 
+  if (values.endpoint) {
+    try {
+      platformWebUrl(values.endpoint);
+    } catch {
+      console.error(`renovate-report-html: --endpoint is not a valid http(s) URL: ${values.endpoint}`);
+      return 2;
+    }
+  }
+
   const report = parseReport(await readJson(input));
-  const data = toReportData(report, { title: values.title });
+  const data = toReportData(report, { title: values.title, platformUrl: values.endpoint });
   const template = await readFile(TEMPLATE_URL, "utf8");
   const outDir = resolve(values.output);
   const outFile = join(outDir, "index.html");

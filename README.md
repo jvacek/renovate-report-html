@@ -26,7 +26,7 @@ Turn it into a page:
 npx renovate-report-html renovate-report.json -o public/ --title "Renovate report"
 ```
 
-This writes `public/index.html`. Requires Node 22 or later.
+This writes `public/index.html`. Requires Node 22 or later. For a self-hosted GitHub or GitLab, add `--endpoint <url>` (the same value you give Renovate) so repository and pull request links point to your instance.
 
 Supported and tested, including a weekly check against the latest Renovate release: **GitHub**, **GitLab** and **local** checkouts. Setup guides with ready-to-use CI pipelines: [GitHub](docs/github.md), [GitLab](docs/gitlab.md), [local](docs/local.md). Reports from other Renovate platforms may work but aren't tested.
 

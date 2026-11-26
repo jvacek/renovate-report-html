@@ -45,6 +45,8 @@ jobs:
 
       - run: npx --yes renovate-report-html renovate-report.json -o public/ --title "Renovate report"
 
+      # On GitHub Enterprise Server, add --endpoint="$GITHUB_SERVER_URL" so repository and pull request links point there.
+
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: public/

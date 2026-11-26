@@ -3,6 +3,7 @@
  * a validated report; the viewer only ever reads it.
  */
 import type { z } from "zod";
+import { platformWebUrl } from "./platform.ts";
 import type { branchSchema, RawDep, RawProblem, RawReport, RawRepository, updateSchema } from "./schema.ts";
 
 export const DATA_VERSION = 1;
@@ -11,6 +12,8 @@ export interface ReportData {
   version: typeof DATA_VERSION;
   title: string;
   generatedAt: string;
+  /** Web URL of a self-hosted GitHub or GitLab. Unset means github.com or gitlab.com. */
+  platformUrl?: string;
   problems: Problem[];
   repositories: Repository[];
 }
@@ -104,6 +107,8 @@ function toRepository(name: string, raw: RawRepository): Repository {
 export interface TransformOptions {
   title?: string;
   generatedAt?: Date;
+  /** Renovate's `endpoint` or the web URL of the code host, for self-hosted instances. */
+  platformUrl?: string;
 }
 
 export function toReportData(report: RawReport, options: TransformOptions = {}): ReportData {
@@ -111,6 +116,7 @@ export function toReportData(report: RawReport, options: TransformOptions = {}):
     version: DATA_VERSION,
     title: options.title ?? "Renovate report",
     generatedAt: (options.generatedAt ?? new Date()).toISOString(),
+    platformUrl: options.platformUrl && platformWebUrl(options.platformUrl),
     problems: report.problems.map(toProblem),
     repositories: Object.entries(report.repositories)
       .map(([name, repo]) => toRepository(name, repo))

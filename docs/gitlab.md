@@ -27,9 +27,11 @@ pages:
       --report-type=file
       --report-path=renovate-report.json
       my-group/project-a my-group/subgroup/project-b
-    - npx --yes renovate-report-html renovate-report.json -o public/ --title "Renovate report"
+    - npx --yes renovate-report-html renovate-report.json -o public/ --title "Renovate report" --endpoint="$CI_SERVER_URL"
   pages: true
 ```
+
+`--endpoint` points the repository and merge request links at your GitLab instance. Without it they go to gitlab.com.
 
 `pages: true` needs GitLab 17.10 or later. On older versions, keep the job name `pages` and add `artifacts: { paths: [public/] }`.
 
