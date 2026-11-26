@@ -2,19 +2,18 @@ import { useMemo, useState } from "preact/hooks";
 import { hasBranchData, openChanges } from "../../report/changes.ts";
 import type { ReportData, Repository } from "../../report/data.ts";
 import { buildFolderTree, type Folder } from "../../report/groups.ts";
-import { changeTerms, groupIcon, hasIconSlot, repoIcon, splitRepoName } from "../../report/platform.ts";
+import { changeTerms, groupIcon, hasIconSlot, splitRepoName } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import {
   Age,
   type Column,
   orderUpdateTypes,
   RepoAvatar,
-  RepoName,
+  RepoLink,
   SortableTable,
   StalenessLegend,
   UpdateCounts,
 } from "../components.tsx";
-import { href } from "../router.ts";
 
 /** How repository names show: the full path, the project name alone, or nested in group folders. */
 type RepoView = "paths" | "names" | "folders";
@@ -140,20 +139,7 @@ function RepoCell({ row, data, hidePath }: { row: RepoRow; data: ReportData; hid
       <span title={folder.path}>{row.label}</span>
     );
   }
-  if (!repo) return null;
-  const link = (
-    <a href={href.repo(repo.name)}>
-      <RepoName name={repo.name} hidePath={hidePath} />
-    </a>
-  );
-  return hasIconSlot(repo, data) ? (
-    <span class="with-icon">
-      <RepoAvatar url={repoIcon(repo, data)} name={repo.name} />
-      {link}
-    </span>
-  ) : (
-    link
-  );
+  return repo ? <RepoLink name={repo.name} report={data} hidePath={hidePath} /> : null;
 }
 
 /** `changesLabel` is unset when the report has no branch data, which hides the column. */

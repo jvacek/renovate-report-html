@@ -1,8 +1,8 @@
 import type { ComponentChildren } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import type { OpenChange } from "../report/changes.ts";
-import type { Dep, Problem, Update } from "../report/data.ts";
-import { platformLinks, splitRepoName } from "../report/platform.ts";
+import type { Dep, Problem, ReportData, Repository, Update } from "../report/data.ts";
+import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
 import { href } from "./router.ts";
 
@@ -407,6 +407,35 @@ export function RepoAvatar({ url, name }: { url?: string; name: string }) {
         <img src={url} alt="" loading="lazy" referrerpolicy="no-referrer" onError={() => setFailed(true)} />
       )}
     </span>
+  );
+}
+
+const reposByName = new WeakMap<Repository[], Map<string, Repository>>();
+
+function findRepo(report: ReportData, name: string): Repository | undefined {
+  let byName = reposByName.get(report.repositories);
+  if (!byName) {
+    byName = new Map(report.repositories.map((repo) => [repo.name, repo]));
+    reposByName.set(report.repositories, byName);
+  }
+  return byName.get(name);
+}
+
+/** A link to a repository's page, with its icon when the report gives repositories an icon slot. */
+export function RepoLink({ name, report, hidePath }: { name: string; report: ReportData; hidePath?: boolean }) {
+  const repo = findRepo(report, name) ?? { name };
+  const link = (
+    <a href={href.repo(name)}>
+      <RepoName name={name} hidePath={hidePath} />
+    </a>
+  );
+  return hasIconSlot(repo, report) ? (
+    <span class="with-icon">
+      <RepoAvatar url={repoIcon(repo, report)} name={name} />
+      {link}
+    </span>
+  ) : (
+    link
   );
 }
 
