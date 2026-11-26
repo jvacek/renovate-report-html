@@ -112,6 +112,8 @@ export interface TransformOptions {
 }
 
 export function toReportData(report: RawReport, options: TransformOptions = {}): ReportData {
+  // One Renovate run talks to one platform, but repositories it skipped early leave it unset.
+  const platform = Object.values(report.repositories).find((repo) => repo.platform)?.platform;
   return {
     version: DATA_VERSION,
     title: options.title ?? "Renovate report",
@@ -119,7 +121,7 @@ export function toReportData(report: RawReport, options: TransformOptions = {}):
     platformUrl: options.platformUrl && platformWebUrl(options.platformUrl),
     problems: report.problems.map(toProblem),
     repositories: Object.entries(report.repositories)
-      .map(([name, repo]) => toRepository(name, repo))
+      .map(([name, repo]) => toRepository(name, { ...repo, platform: repo.platform ?? platform }))
       .sort((a, b) => a.name.localeCompare(b.name)),
   };
 }

@@ -57,3 +57,13 @@ describe("platformWebUrl", () => {
     expect(data.platformUrl).toBe("https://git.example.com");
   });
 });
+
+describe("repository platform", () => {
+  it("fills in the run's platform for repositories that lack it", () => {
+    const raw = readFixture("gitlab-report-full") as { repositories: Record<string, { platform?: string }> };
+    const [first] = Object.values(raw.repositories);
+    if (first) delete first.platform;
+    const data = toReportData(parseReport(raw));
+    expect(data.repositories.every((r) => r.platform === "gitlab")).toBe(true);
+  });
+});
