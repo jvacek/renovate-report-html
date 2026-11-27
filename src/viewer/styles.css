@@ -500,6 +500,12 @@ th {
   color: var(--major);
 }
 
+.badge.occurrences {
+  margin-left: 0.3rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
 .badge.skipped {
   color: var(--muted);
   font-weight: 400;

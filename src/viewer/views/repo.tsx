@@ -13,6 +13,7 @@ import {
   DepName,
   ExternalButton,
   heldBackColumns,
+  Occurrences,
   ProblemList,
   plural,
   RepoAvatar,
@@ -37,6 +38,7 @@ const baseDepColumns: Column<Dep>[] = [
         <a href={href.package(packageId(d))}>
           <DepName dep={d} />
         </a>
+        <Occurrences dep={d} />
       </span>
     ),
   },

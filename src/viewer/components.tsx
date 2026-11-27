@@ -43,6 +43,16 @@ export function DepName({ dep }: { dep: Dep }) {
   );
 }
 
+/** "×18" when the file lists the same dep several times. */
+export function Occurrences({ dep }: { dep: Dep }) {
+  if (!dep.occurrences) return null;
+  return (
+    <span class="badge occurrences" title={`Listed ${dep.occurrences} times in this file, all identical`}>
+      ×{dep.occurrences}
+    </span>
+  );
+}
+
 export function CurrentVersion({ dep }: { dep: Dep }) {
   const version = dep.currentVersion ?? dep.lockedVersion;
   const value = dep.currentValue;

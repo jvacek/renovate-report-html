@@ -18,6 +18,7 @@ import {
   changesColumn,
   DepName,
   ExternalButton,
+  Occurrences,
   RepoLink,
   RepoList,
   SortableTable,
@@ -39,7 +40,11 @@ function baseColumns(newest: string | undefined, report: ReportData): Column<Dep
     {
       label: "File",
       sort: (r) => r.packageFile,
-      render: (r) => <code>{r.packageFile}</code>,
+      render: (r) => (
+        <>
+          <code>{r.packageFile}</code> <Occurrences dep={r.dep} />
+        </>
+      ),
     },
     {
       label: "Type",
