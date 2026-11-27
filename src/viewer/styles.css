@@ -1043,6 +1043,11 @@ h3 .muted {
   text-align: center;
 }
 
+/* An empty slot still has a text baseline, so the row lines up like the others. */
+.update-count::before {
+  content: "\200b";
+}
+
 /* A ring in the type's colour, like .badge but sized to the number. */
 .update-chip {
   display: inline-block;
