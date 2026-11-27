@@ -577,18 +577,36 @@ export function UpdateCounts({ counts, types }: { counts: Record<string, number>
   );
 }
 
-/** Explains the slots of an UpdateCounts column; goes in its `info`. */
-export function updateTypesInfo(types: string[], what = "Updates"): ComponentChildren {
+/** What each update type means, in UPDATE_TYPE_ORDER. */
+const UPDATE_TYPE_MEANINGS: Record<string, string> = {
+  major: "new major version, may break things",
+  minor: "new features, should be compatible",
+  patch: "bug fixes only",
+  digest: "newer image or commit for the same tag",
+  pin: "pins a range to an exact version",
+  pinDigest: "adds a digest to the version",
+  lockFileMaintenance: "refreshes the lock file",
+  bump: "raises the range to cover a new version",
+  replacement: "swaps in a replacement package",
+  rollback: "back to an earlier version",
+};
+
+/**
+ * Explains an UpdateCounts column; goes in its `info`. Lists every type, not just the ones on
+ * the page, so it reads the same everywhere.
+ */
+export function updateTypesInfo(what = "Updates"): ComponentChildren {
   return (
     <>
-      <p>{what} by type, one slot each, in this order. Sorts by the total.</p>
-      <ul class="info-key">
-        {types.map((type) => (
-          <li key={type}>
-            <span class={`update-type type-${type}`}>{type}</span>
-          </li>
+      <p>{what} by type, counted in this order. Sorts by the total.</p>
+      <dl class="info-key">
+        {UPDATE_TYPE_ORDER.map((type) => (
+          <div key={type}>
+            <dt class={`update-type type-${type}`}>{type}</dt>
+            <dd>{UPDATE_TYPE_MEANINGS[type]}</dd>
+          </div>
         ))}
-      </ul>
+      </dl>
     </>
   );
 }
@@ -681,7 +699,7 @@ export function heldBackColumns(
 function updatesColumn<T extends { branch: Branch }>(updateTypes: string[]): Column<T> {
   return {
     label: "Updates",
-    info: updateTypesInfo(updateTypes),
+    info: updateTypesInfo(),
     descFirst: true,
     sort: (c) => c.branch.upgrades.length,
     render: (c) => <UpdateCounts counts={upgradesByType(c.branch)} types={updateTypes} />,

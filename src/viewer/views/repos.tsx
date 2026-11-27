@@ -145,7 +145,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
     },
     {
       label: "Updates",
-      info: updateTypesInfo(updateTypes, "Available updates"),
+      info: updateTypesInfo("Available updates"),
       descFirst: true,
       sort: (r) => r.updates,
       render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
