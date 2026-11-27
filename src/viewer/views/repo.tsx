@@ -15,6 +15,7 @@ import {
   EmptyState,
   ExternalButton,
   heldBackColumns,
+  libYearsInfo,
   Occurrences,
   ProblemList,
   plural,
@@ -151,7 +152,7 @@ export function RepoView({
         <Stat label="Dependencies" value={deps.length} />
         <Stat label="With updates" value={outdated} />
         <Stat label="Pending updates" value={updates} />
-        {repo.libYears !== undefined && <Stat label="Libyears" value={repo.libYears.toFixed(1)} />}
+        {repo.libYears !== undefined && <Stat label="Libyears" value={repo.libYears.toFixed(1)} info={libYearsInfo} />}
         <Stat label="Problems" value={repo.problems.length} tone={repo.problems.length ? "warn" : undefined} />
       </div>
 

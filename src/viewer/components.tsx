@@ -214,14 +214,39 @@ function PayloadButton({ payload }: { payload: Payload }) {
   );
 }
 
-export function Stat({ label, value, tone }: { label: string; value: ComponentChildren; tone?: string }) {
+export function Stat({
+  label,
+  value,
+  tone,
+  info,
+}: {
+  label: string;
+  value: ComponentChildren;
+  tone?: string;
+  /** Explanation behind an (i) button next to the label. */
+  info?: ComponentChildren;
+}) {
   return (
     <div class={`stat ${tone ? `tone-${tone}` : ""}`}>
       <div class="stat-value">{value}</div>
-      <div class="stat-label">{label}</div>
+      <div class="stat-label">
+        {label}
+        {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
+      </div>
     </div>
   );
 }
+
+/** Explains libyears; goes in the `info` of a libyears column or stat. */
+export const libYearsInfo = (
+  <>
+    <p>How far behind the dependencies are, in years.</p>
+    <p>
+      For each dependency, the time between the release of the version in use and the release of the newest version,
+      added up. 0 means everything is on the newest version.
+    </p>
+  </>
+);
 
 /**
  * Horizontal bars for a set of counts, largest first unless `order` is given.

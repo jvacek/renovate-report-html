@@ -9,6 +9,7 @@ import {
   ageInfo,
   type Column,
   Count,
+  libYearsInfo,
   orderUpdateTypes,
   RepoLink,
   SortableTable,
@@ -169,6 +170,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
     },
     {
       label: "Libyears",
+      info: libYearsInfo,
       class: "num",
       descFirst: true,
       sort: (r) => r.libYears,

@@ -451,6 +451,10 @@ h3::before {
   margin: 0 0 0.4rem;
 }
 
+.info-popup p:last-child {
+  margin-bottom: 0;
+}
+
 .info-key {
   display: grid;
   gap: 0.15rem;
