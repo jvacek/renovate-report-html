@@ -4,7 +4,7 @@ import { describeLimit, type HeldBackChange, type OpenChange, upgradesByType } f
 import type { Branch, Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
 import { tokenizeJson } from "../report/json-tokens.ts";
 import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
-import { staleness, updateTypeOf } from "../report/stats.ts";
+import { countsBySlot, HOUSEKEEPING_UPDATE_TYPES, staleness, updateTypeOf, updateTypeSlot } from "../report/stats.ts";
 import { href } from "./router.ts";
 
 export function formatAge(days: number): string {
@@ -582,18 +582,25 @@ export function orderUpdateTypes(types: string[]): string[] {
 }
 
 /**
- * Update counts in fixed slots, one per type in `types`, so the same type lines
- * up across table rows even when a row lacks it or counts have more digits.
- * The colour says the type; updateTypesInfo explains it.
+ * Update counts in fixed slots, one per type in `types` (ordered), so the same type lines up
+ * across table rows even when a row lacks it or counts have more digits. Housekeeping types
+ * share one "other" slot. The colour says the type; updateTypesInfo explains it.
  */
 export function UpdateCounts({ counts, types }: { counts: Record<string, number>; types: string[] }) {
+  const slots = [...new Set(types.map(updateTypeSlot))];
+  const bySlot = countsBySlot(counts);
+  const title = (slot: string) => {
+    if (slot !== "other") return `${bySlot[slot]} ${slot}`;
+    const parts = HOUSEKEEPING_UPDATE_TYPES.filter((type) => counts[type]).map((type) => `${counts[type]} ${type}`);
+    return `${bySlot[slot]} other: ${parts.join(", ")}`;
+  };
   return (
     <span class="update-counts">
-      {types.map((type) => (
-        <span key={type} class="update-count">
-          {counts[type] ? (
-            <span class={`update-chip count type-${type}`} title={`${counts[type]} ${type}`}>
-              {counts[type]}
+      {slots.map((slot) => (
+        <span key={slot} class="update-count">
+          {bySlot[slot] ? (
+            <span class={`update-chip count type-${slot}`} title={title(slot)}>
+              {bySlot[slot]}
             </span>
           ) : null}
         </span>
@@ -608,12 +615,13 @@ const UPDATE_TYPE_MEANINGS: Record<string, string> = {
   minor: "new features, should be compatible",
   patch: "bug fixes only",
   digest: "newer image or commit for the same tag",
+  other: "housekeeping, counted together:",
   pin: "pins a range to an exact version",
   pinDigest: "adds a digest to the version",
   lockFileMaintenance: "refreshes the lock file",
   bump: "raises the range to cover a new version",
   replacement: "swaps in a replacement package",
-  rollback: "back to an earlier version",
+  rollback: "back to an earlier version, as the one in use was pulled",
 };
 
 /**
@@ -621,16 +629,23 @@ const UPDATE_TYPE_MEANINGS: Record<string, string> = {
  * the page, so it reads the same everywhere.
  */
 export function updateTypesInfo(what = "Updates"): ComponentChildren {
+  const row = (type: string, sub?: boolean) => (
+    <div key={type} class={`info-row ${sub ? "info-sub" : ""}`}>
+      <dt>
+        <span class={`update-type type-${type}`}>{type}</span>
+      </dt>
+      <dd class="info-meaning">{UPDATE_TYPE_MEANINGS[type]}</dd>
+    </div>
+  );
+  // Slot order, with the housekeeping types listed under the "other" slot they share.
+  const slots = [...new Set(UPDATE_TYPE_ORDER.map(updateTypeSlot))];
   return (
     <>
       <p>{what} by type, counted in this order. Sorts by the total.</p>
       <dl class="info-table">
-        {UPDATE_TYPE_ORDER.map((type) => (
-          <div key={type} class="info-row">
-            <dt class={`update-type type-${type}`}>{type}</dt>
-            <dd class="info-meaning">{UPDATE_TYPE_MEANINGS[type]}</dd>
-          </div>
-        ))}
+        {slots.flatMap((slot) =>
+          slot === "other" ? [row("other"), ...HOUSEKEEPING_UPDATE_TYPES.map((type) => row(type, true))] : [row(slot)],
+        )}
       </dl>
     </>
   );

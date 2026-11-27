@@ -633,8 +633,7 @@ th {
   color: var(--patch);
 }
 
-.type-digest,
-.type-pinDigest {
+.type-digest {
   color: var(--digest);
 }
 
@@ -650,8 +649,7 @@ th {
   background: var(--patch);
 }
 
-.bar.type-digest,
-.bar.type-pinDigest {
+.bar.type-digest {
   background: var(--digest);
 }
 
@@ -980,6 +978,25 @@ h3 .muted {
 /* Grey like .badge for types without a colour; :where() lets .type-* win. */
 :where(.update-chip, .update-type) {
   color: var(--other);
+}
+
+/* Rollback: the version in use was pulled from the registry. Filled, so it stands out without a colour of its own. */
+.badge.type-rollback,
+.update-chip.type-rollback,
+.update-type.type-rollback {
+  color: var(--bg);
+  background: var(--fg);
+  box-shadow: none;
+}
+
+.update-type.type-rollback {
+  padding: 0 0.4em;
+  border-radius: 999px;
+}
+
+/* In the update types tooltip: types counted under the row above, indented beneath it. */
+.info-sub .update-type {
+  margin-left: 1em;
 }
 
 .update-type + .update-type {

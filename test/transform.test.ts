@@ -3,11 +3,13 @@ import { toProblem, toReportData } from "../src/report/data.ts";
 import { parseReport } from "../src/report/schema.ts";
 import {
   allDeps,
+  countsBySlot,
   isBehind,
   newestInUse,
   packageIndex,
   staleness,
   summarize,
+  updateTypeSlot,
   versionCounts,
 } from "../src/report/stats.ts";
 import { fullReport, lookupData, readFixture } from "./helpers.ts";
@@ -266,5 +268,25 @@ describe("staleness", () => {
     [730, "ancient"],
   ] as const)("buckets %s days as %s", (days, expected) => {
     expect(staleness(days)).toBe(expected);
+  });
+});
+
+describe("update type slots", () => {
+  it.each([
+    ["major", "major"],
+    ["digest", "digest"],
+    ["pin", "other"],
+    ["pinDigest", "other"],
+    ["lockFileMaintenance", "other"],
+    ["bump", "other"],
+    ["replacement", "replacement"],
+    ["rollback", "rollback"],
+    ["unknown", "unknown"],
+  ])("puts %s in the %s slot", (type, slot) => {
+    expect(updateTypeSlot(type)).toBe(slot);
+  });
+
+  it("adds up housekeeping counts under other", () => {
+    expect(countsBySlot({ major: 2, pin: 1, bump: 3, rollback: 1 })).toEqual({ major: 2, other: 4, rollback: 1 });
   });
 });

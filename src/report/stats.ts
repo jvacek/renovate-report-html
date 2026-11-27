@@ -29,6 +29,24 @@ export function updateTypeOf(update: Update): string {
   return update.updateType ?? "unknown";
 }
 
+/** Renovate tidying its own setup rather than moving to new code: counted together as "other". */
+export const HOUSEKEEPING_UPDATE_TYPES = ["pin", "pinDigest", "lockFileMaintenance", "bump"];
+
+/** The count slot an update type falls in: its own, or "other" for housekeeping types. */
+export function updateTypeSlot(type: string): string {
+  return HOUSEKEEPING_UPDATE_TYPES.includes(type) ? "other" : type;
+}
+
+/** Counts per update type, regrouped by slot. */
+export function countsBySlot(counts: Record<string, number>): Record<string, number> {
+  const bySlot: Record<string, number> = {};
+  for (const [type, n] of Object.entries(counts)) {
+    const slot = updateTypeSlot(type);
+    bySlot[slot] = (bySlot[slot] ?? 0) + n;
+  }
+  return bySlot;
+}
+
 export interface Summary {
   repositories: number;
   deps: number;
