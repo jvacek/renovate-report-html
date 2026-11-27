@@ -74,6 +74,8 @@ export interface Dep extends Omit<RawDep, "depName" | "warnings" | "replaceStrin
   name: string;
   /** Renovate gave no name, typically because the reference contains a variable. */
   unnamed?: true;
+  /** How many identical entries the file has, when more than one (like a CI component included per job). */
+  occurrences?: number;
   warnings: string[];
 }
 
@@ -117,6 +119,21 @@ export function toDep({ depName, replaceString, warnings, ...rest }: RawDep): De
   };
 }
 
+/**
+ * Collapse entries Renovate reports more than once in one file with nothing to tell them apart,
+ * such as a CI component included by every job. They always share a branch, so one row is enough.
+ */
+export function mergeDuplicates(deps: Dep[]): Dep[] {
+  const byKey = new Map<string, Dep>();
+  for (const dep of deps) {
+    const key = JSON.stringify(dep);
+    const seen = byKey.get(key);
+    if (seen) seen.occurrences = (seen.occurrences ?? 1) + 1;
+    else byKey.set(key, { ...dep });
+  }
+  return [...byKey.values()];
+}
+
 function toRepository(name: string, raw: RawRepository): Repository {
   return {
     name,
@@ -128,7 +145,7 @@ function toRepository(name: string, raw: RawRepository): Repository {
         packageFiles: files.map((file) => ({
           path: file.packageFile,
           lockFiles: file.lockFiles,
-          deps: file.deps.map(toDep),
+          deps: mergeDuplicates(file.deps.map(toDep)),
         })),
       }))
       .sort((a, b) => a.name.localeCompare(b.name)),

@@ -125,7 +125,7 @@ export function staleness(ageInDays: number | undefined): Staleness {
 
 export interface VersionCount {
   version: string;
-  /** Number of places (dependency entries) on this version. */
+  /** Number of places on this version. Identical entries in one file count once. */
   uses: number;
   repos: string[];
   ageInDays?: number;

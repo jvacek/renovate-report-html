@@ -124,6 +124,35 @@ describe("toReportData", () => {
     expect(unnamed.every((ref) => ref.dep.name.includes("$"))).toBe(true);
   });
 
+  it("merges identical deps within a file and counts them", () => {
+    const opentofu = { depName: "components/opentofu", datasource: "gitlab-tags", currentValue: "5.1.0" };
+    const deps = depsOf([opentofu, { depName: "alpine" }, opentofu, { ...opentofu, currentValue: "5.0.0" }, opentofu]);
+    expect(deps.map((d) => [d.name, d.currentValue, d.occurrences])).toEqual([
+      ["components/opentofu", "5.1.0", 3],
+      ["alpine", undefined, undefined],
+      ["components/opentofu", "5.0.0", undefined],
+    ]);
+  });
+
+  it("does not merge across files", () => {
+    const report = parseReport({
+      repositories: {
+        "a/b": {
+          packageFiles: {
+            npm: [
+              { packageFile: "p", deps: [{ depName: "d" }] },
+              { packageFile: "q", deps: [{ depName: "d" }] },
+            ],
+          },
+        },
+      },
+    });
+    expect([...allDeps(toReportData(report).repositories)].map((ref) => ref.dep.occurrences)).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
   it("normalises object warnings to strings", () => {
     const report = parseReport({
       repositories: {
@@ -151,11 +180,11 @@ describe("toReportData", () => {
 describe("summarize", () => {
   it("counts deps, updates, skip reasons and problems across the fixture", () => {
     const summary = summarize(lookupData());
-    expect(summary).toMatchObject({ repositories: 5, deps: 527, problems: 6 });
-    expect(summary.updatesByType).toEqual({ major: 48, minor: 25, patch: 26 });
+    expect(summary).toMatchObject({ repositories: 5, deps: 495, problems: 6 });
+    expect(summary.updatesByType).toEqual({ major: 45, minor: 24, patch: 24 });
     expect(summary.skippedByReason).toMatchObject({
       disabled: 194,
-      "unspecified-version": 56,
+      "unspecified-version": 52,
       "local-dependency": 2,
     });
   });
@@ -189,7 +218,10 @@ describe("packageIndex", () => {
       repositories: {
         "a/b": {
           packageFiles: {
-            npm: [{ packageFile: "p", deps: [dep("1.0.0", "2.0.0"), dep("1.0.0", "2.0.0"), dep("1.1.0", "2.0.0")] }],
+            npm: [
+              { packageFile: "p", deps: [dep("1.0.0", "2.0.0"), dep("1.1.0", "2.0.0")] },
+              { packageFile: "q", deps: [dep("1.0.0", "2.0.0")] },
+            ],
           },
         },
         "c/d": { packageFiles: { npm: [{ packageFile: "p", deps: [dep("2.0.0")] }] } },
