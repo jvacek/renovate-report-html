@@ -12,6 +12,7 @@ import {
   Count,
   libYearsInfo,
   orderUpdateTypes,
+  ProblemCount,
   RepoLink,
   SortableTable,
   UpdateCounts,
@@ -102,8 +103,17 @@ const childrenOf = (row: RepoRow) => row.folder?.children;
 
 function RepoCell({ row, data, hidePath }: { row: RepoRow; data: ReportData; hidePath: boolean }) {
   const { repo, folder } = row;
-  if (folder) return <GroupCell path={folder.path} label={row.label} first={folder.first} data={data} />;
-  return repo ? <RepoLink name={repo.name} report={data} hidePath={hidePath} /> : null;
+  const name = folder ? (
+    <GroupCell path={folder.path} label={row.label} first={folder.first} data={data} />
+  ) : repo ? (
+    <RepoLink name={repo.name} report={data} hidePath={hidePath} />
+  ) : null;
+  return (
+    <span class="with-problems">
+      {name}
+      <ProblemCount count={row.problems} after />
+    </span>
+  );
 }
 
 /** `changesLabel` is unset when no repository has an open change, which hides the column. */
@@ -124,14 +134,6 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       label: "Repository",
       sort: (r) => r.label,
       render: (r) => <RepoCell row={r} data={data} hidePath={view !== "paths"} />,
-    },
-    {
-      label: "Problems",
-      class: "num",
-      descFirst: true,
-      sort: (r) => r.problems,
-      // Blank when there are none, so the warning badges stand out.
-      render: (r) => (r.problems ? <span class="badge level-warn">{r.problems}</span> : null),
     },
     { label: "Deps", class: "num", descFirst: true, sort: (r) => r.deps, render: (r) => <Count value={r.deps} /> },
     {

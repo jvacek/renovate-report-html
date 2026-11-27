@@ -214,6 +214,24 @@ function PayloadButton({ payload }: { payload: Payload }) {
   );
 }
 
+/** How the UI counts problems everywhere: the number in a yellow warning badge. Nothing for zero. */
+export function ProblemCount({
+  count,
+  after,
+}: {
+  count: number;
+  /** Follows text, so needs a gap. */
+  after?: boolean;
+}) {
+  if (!count) return null;
+  const label = plural(count, "problem");
+  return (
+    <span class={`badge level-warn problem-count${after ? " problem-count-after" : ""}`} title={label}>
+      {count}
+    </span>
+  );
+}
+
 export function Stat({
   label,
   value,

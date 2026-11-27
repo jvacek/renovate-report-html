@@ -1,5 +1,5 @@
 import type { ReportData } from "../../report/data.ts";
-import { EmptyState, ProblemList, RepoName } from "../components.tsx";
+import { EmptyState, ProblemCount, ProblemList, RepoName } from "../components.tsx";
 import { href } from "../router.ts";
 
 export function ProblemsView({ data }: { data: ReportData }) {
@@ -13,7 +13,10 @@ export function ProblemsView({ data }: { data: ReportData }) {
       {data.problems.length === 0 && repos.length === 0 && <EmptyState>Renovate reported no problems.</EmptyState>}
       {data.problems.length > 0 && (
         <section>
-          <h2>Global</h2>
+          <h2>
+            Global
+            <ProblemCount count={data.problems.length} after />
+          </h2>
           <ProblemList problems={data.problems} />
         </section>
       )}
@@ -23,6 +26,7 @@ export function ProblemsView({ data }: { data: ReportData }) {
             <a href={href.repo(repo.name)}>
               <RepoName name={repo.name} />
             </a>
+            <ProblemCount count={repo.problems.length} after />
           </h2>
           <ProblemList problems={repo.problems} />
         </section>

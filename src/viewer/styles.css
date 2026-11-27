@@ -236,6 +236,26 @@ h3::before {
   margin-left: 0.4rem;
 }
 
+.problem-count {
+  flex: none;
+}
+
+.problem-count-after {
+  margin-left: 0.4em;
+}
+
+/* A name with its problem count at the right edge of the cell. */
+.with-problems {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.with-problems .problem-count {
+  margin-left: auto;
+}
+
 /* At least a screen tall, with the page growing so the footer sits at the bottom on short pages. */
 #app {
   display: flex;
@@ -591,6 +611,8 @@ th .info-tip {
 .tree-toggle {
   all: unset;
   display: flex;
+  /* Full width, so anything pushed right in the cell (the problem count) reaches the edge. */
+  width: 100%;
   align-items: flex-start;
   font-weight: 600;
   cursor: pointer;

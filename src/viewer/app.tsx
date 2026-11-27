@@ -3,6 +3,7 @@ import { allHeldBackChanges, allOpenChanges, type ChangesByUse, changesByUse } f
 import type { ReportData } from "../report/data.ts";
 import { changeTerms } from "../report/platform.ts";
 import { type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
+import { ProblemCount } from "./components.tsx";
 import { href, type Route, useRoute } from "./router.ts";
 import { ThemeSwitcher } from "./theme-switcher.tsx";
 import { ChangesView } from "./views/changes.tsx";
@@ -36,7 +37,7 @@ export function App({ data }: { data: ReportData }) {
           {openChangeCount + heldBackCount > 0 && (
             <NavLink route={route} to="changes" label={`Open ${terms.short}s`} count={openChangeCount} />
           )}
-          <NavLink route={route} to="problems" label="Problems" count={summary.problems} warn />
+          <NavLink route={route} to="problems" label="Problems" problems={summary.problems} />
         </nav>
         <ThemeSwitcher />
       </header>
@@ -56,20 +57,22 @@ function NavLink({
   to,
   label,
   count,
-  warn,
+  problems,
 }: {
   route: Route;
   to: "overview" | "repos" | "packages" | "changes" | "problems";
   label: string;
   count?: number;
-  warn?: boolean;
+  /** A problem count, drawn as the problem badge instead of a plain count. */
+  problems?: number;
 }) {
   const active =
     route.name === to || (to === "packages" && route.name === "package") || (to === "repos" && route.name === "repo");
   return (
     <a href={href[to]()} class={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
       {label}
-      {count ? <span class={`badge nav-count${warn ? " level-warn" : ""}`}>{count}</span> : null}
+      {count ? <span class="badge nav-count">{count}</span> : null}
+      {problems ? <ProblemCount count={problems} after /> : null}
     </a>
   );
 }

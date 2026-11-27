@@ -2,7 +2,7 @@ import { allHeldBackChanges, allOpenChanges } from "../../report/changes.ts";
 import type { ReportData } from "../../report/data.ts";
 import { changeTerms } from "../../report/platform.ts";
 import type { Summary } from "../../report/stats.ts";
-import { BarList, plural, Stat, UPDATE_TYPE_ORDER, UpdateBadge } from "../components.tsx";
+import { BarList, ProblemCount, plural, Stat, UPDATE_TYPE_ORDER, UpdateBadge } from "../components.tsx";
 import { href } from "../router.ts";
 
 export function Overview({ data, summary }: { data: ReportData; summary: Summary }) {
@@ -42,7 +42,8 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
                 {reposWithProblems.map((repo, i) => (
                   <span key={repo.name}>
                     {i > 0 && ", "}
-                    <a href={href.repo(repo.name)}>{repo.name}</a> ({repo.problems.length})
+                    <a href={href.repo(repo.name)}>{repo.name}</a>
+                    <ProblemCount count={repo.problems.length} after />
                   </span>
                 ))}
                 .
