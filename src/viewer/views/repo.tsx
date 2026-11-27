@@ -1,3 +1,4 @@
+import { Fragment } from "preact";
 import { useState } from "preact/hooks";
 import { type ChangesByUse, heldBackChanges, openChanges } from "../../report/changes.ts";
 import type { Dep, ReportData, Repository } from "../../report/data.ts";
@@ -278,10 +279,27 @@ export function RepoView({
               {files.map((file) => (
                 <details key={file.path} open class="package-file">
                   <summary>
-                    <code>{file.path}</code>{" "}
+                    <code>{file.path}</code>
+                    {links && <FileLink href={links.file(file.path, repo.defaultBranch)} />}{" "}
                     <span class="muted">
                       {plural(file.deps.length, "dep")}
-                      {file.lockFiles?.length ? `, lock: ${file.lockFiles.join(", ")}` : ""}
+                      {file.lockFiles?.length ? (
+                        <>
+                          , lock:{" "}
+                          {file.lockFiles.map((lock, i) => (
+                            <Fragment key={lock}>
+                              {i > 0 && ", "}
+                              {links ? (
+                                <a href={links.file(lock, repo.defaultBranch)} target="_blank" rel="noreferrer">
+                                  {lock}
+                                </a>
+                              ) : (
+                                lock
+                              )}
+                            </Fragment>
+                          ))}
+                        </>
+                      ) : null}
                     </span>
                   </summary>
                   <SortableTable
@@ -307,6 +325,17 @@ export function RepoView({
         })}
       </section>
     </>
+  );
+}
+
+function FileLink({ href }: { href: string }) {
+  return (
+    <a class="file-link" href={href} target="_blank" rel="noreferrer" title="View file">
+      <svg viewBox="0 0 24 24" role="img" aria-label="View file">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+      </svg>
+    </a>
   );
 }
 

@@ -995,6 +995,27 @@ h3 .muted {
   filter: brightness(1.1);
 }
 
+.file-link {
+  display: inline-flex;
+  margin-left: 0.3rem;
+  vertical-align: -0.15em;
+  color: var(--muted);
+}
+
+.file-link:hover {
+  color: var(--accent);
+}
+
+.file-link svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .callout .button {
   margin-top: 0.25rem;
 }
