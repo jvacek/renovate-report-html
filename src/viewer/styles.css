@@ -553,6 +553,22 @@ th.num {
   cursor: pointer;
 }
 
+/* The whole header cell sorts, caret included; the (i) sits above it to stay clickable. */
+th:has(> .th-content > .sort) {
+  position: relative;
+}
+
+.sort::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+th .info-tip {
+  position: relative;
+  z-index: 1;
+}
+
 .sort:focus-visible {
   outline: 2px solid var(--accent);
 }
@@ -608,6 +624,8 @@ th.num {
   box-sizing: content-box;
   font-size: 0.75em;
   text-align: right;
+  /* Clicks fall through to the sort button's overlay. */
+  pointer-events: none;
 }
 
 /* Fills the header cell: label and (i) on the left, sort arrow on the right. */
