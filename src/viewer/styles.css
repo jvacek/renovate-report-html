@@ -435,7 +435,7 @@ h3::before {
   position: fixed;
   z-index: 20;
   width: max-content;
-  max-width: min(24rem, calc(100vw - 16px));
+  max-width: min(28rem, calc(100vw - 16px));
   padding: 0.6rem 0.8rem;
   font-weight: 400;
   text-align: left;
@@ -463,14 +463,26 @@ h3::before {
   list-style: none;
 }
 
-/* A term and what it means, on one line when there's room. */
-.info-key > div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.5em;
+/* Terms and what they mean, as a two-column table with faint lines between rows. */
+.info-table {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  margin: 0;
 }
 
-.info-key dd {
+.info-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  column-gap: 0.8em;
+  padding: 0.25rem 0;
+}
+
+.info-row + .info-row {
+  border-top: 1px solid var(--border);
+}
+
+.info-meaning {
   margin: 0;
   color: var(--muted);
 }

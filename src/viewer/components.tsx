@@ -624,11 +624,11 @@ export function updateTypesInfo(what = "Updates"): ComponentChildren {
   return (
     <>
       <p>{what} by type, counted in this order. Sorts by the total.</p>
-      <dl class="info-key">
+      <dl class="info-table">
         {UPDATE_TYPE_ORDER.map((type) => (
-          <div key={type}>
+          <div key={type} class="info-row">
             <dt class={`update-type type-${type}`}>{type}</dt>
-            <dd>{UPDATE_TYPE_MEANINGS[type]}</dd>
+            <dd class="info-meaning">{UPDATE_TYPE_MEANINGS[type]}</dd>
           </div>
         ))}
       </dl>
