@@ -27,7 +27,6 @@ interface RepoRow {
   repo?: Repository;
   folder?: { path: string; children: RepoRow[]; first: Repository };
   problems: number;
-  managers: number;
   deps: number;
   outdated: number;
   skippedByReason: Record<string, number>;
@@ -35,7 +34,6 @@ interface RepoRow {
   updatesByType: Record<string, number>;
   updates: number;
   openChanges: number;
-  medianAge?: number;
   oldestAge?: number;
   libYears?: number;
 }
@@ -46,7 +44,6 @@ function statsOf(repos: Repository[]): Stats {
   const libYears = repos.flatMap((repo) => (repo.libYears === undefined ? [] : [repo.libYears]));
   const row: Stats = {
     problems: repos.reduce((sum, repo) => sum + repo.problems.length, 0),
-    managers: new Set(repos.flatMap((repo) => repo.managers.map((m) => m.name))).size,
     deps: 0,
     outdated: 0,
     skippedByReason: {},
@@ -56,7 +53,6 @@ function statsOf(repos: Repository[]): Stats {
     openChanges: repos.reduce((sum, repo) => sum + openChanges(repo).length, 0),
     libYears: libYears.length ? libYears.reduce((a, b) => a + b, 0) : undefined,
   };
-  const ages: number[] = [];
   for (const { dep } of allDeps(repos)) {
     row.deps++;
     if (dep.updates.length > 0) row.outdated++;
@@ -69,11 +65,9 @@ function statsOf(repos: Repository[]): Stats {
       row.updatesByType[type] = (row.updatesByType[type] ?? 0) + 1;
       row.updates++;
     }
-    if (dep.currentVersionAgeInDays !== undefined) ages.push(dep.currentVersionAgeInDays);
+    const age = dep.currentVersionAgeInDays;
+    if (age !== undefined && (row.oldestAge === undefined || age > row.oldestAge)) row.oldestAge = age;
   }
-  ages.sort((a, b) => a - b);
-  row.medianAge = ages[Math.floor(ages.length / 2)];
-  row.oldestAge = ages.at(-1);
   return row;
 }
 
@@ -137,13 +131,6 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       // Blank when there are none, so the warning badges stand out.
       render: (r) => (r.problems ? <span class="badge level-warn">{r.problems}</span> : null),
     },
-    {
-      label: "Managers",
-      class: "num",
-      descFirst: true,
-      sort: (r) => r.managers,
-      render: (r) => <Count value={r.managers} />,
-    },
     { label: "Deps", class: "num", descFirst: true, sort: (r) => r.deps, render: (r) => <Count value={r.deps} /> },
     {
       label: "Outdated",
@@ -176,14 +163,6 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
     },
     ...changes,
-    {
-      label: "Median age",
-      info: ageInfo,
-      class: "num",
-      descFirst: true,
-      sort: (r) => r.medianAge,
-      render: (r) => <Age days={r.medianAge} />,
-    },
     {
       label: "Oldest",
       info: ageInfo,
