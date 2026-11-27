@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
 import { useMemo, useRef, useState } from "preact/hooks";
-import type { OpenChange } from "../report/changes.ts";
+import { type OpenChange, upgradesByType } from "../report/changes.ts";
 import type { Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
 import { tokenizeJson } from "../report/json-tokens.ts";
 import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
@@ -469,6 +469,11 @@ export function ExternalButton({
   );
 }
 
+/** The update types that occur in `changes`, in order: one slot each in the Updates column. */
+export function changeUpdateTypes(changes: OpenChange[]): string[] {
+  return orderUpdateTypes(changes.flatMap((c) => c.branch.upgrades.map((u) => u.updateType ?? "unknown")));
+}
+
 /** "#12", linked to the pull or merge request when we know the code host. */
 export function ChangeLink({ change, platformUrl }: { change: OpenChange; platformUrl?: string }) {
   const { prNo, prTitle } = change.branch;
@@ -479,6 +484,44 @@ export function ChangeLink({ change, platformUrl }: { change: OpenChange; platfo
       #{prNo}
     </a>
   );
+}
+
+/**
+ * Columns for a table of one repository's open changes: number, title, updates and branch.
+ * `updateTypes` are the slots of the Updates column (see `changeUpdateTypes`).
+ */
+export function changeColumns(
+  term: string,
+  updateTypes: string[],
+  platformUrl?: string,
+): [number: Column<OpenChange>, title: Column<OpenChange>, updates: Column<OpenChange>, branch: Column<OpenChange>] {
+  return [
+    {
+      label: term,
+      class: "num",
+      descFirst: true,
+      sort: (c) => c.branch.prNo,
+      render: (c) => <ChangeLink change={c} platformUrl={platformUrl} />,
+    },
+    { label: "Title", sort: (c) => c.branch.prTitle, render: (c) => c.branch.prTitle },
+    {
+      label: "Updates",
+      title: `Updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
+      descFirst: true,
+      sort: (c) => c.branch.upgrades.length,
+      render: (c) => <UpdateCounts counts={upgradesByType(c.branch)} types={updateTypes} />,
+    },
+    {
+      label: "Branch",
+      sort: (c) => c.branch.branchName,
+      render: (c) => (
+        <>
+          <code>{c.branch.branchName}</code>
+          {c.branch.baseBranch && <span class="muted"> into {c.branch.baseBranch}</span>}
+        </>
+      ),
+    },
+  ];
 }
 
 /**

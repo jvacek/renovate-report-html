@@ -105,4 +105,12 @@ describe("rendered page", () => {
     expect(page.document.querySelector("h1")?.textContent).toBe("pallets/flask");
     await page.close();
   });
+
+  it("leaves the open PRs page out of the nav when there are none", async () => {
+    const page = await boot("#/changes");
+    expect(page.document.querySelector("h1")?.textContent).toBe("Open pull requests");
+    expect(page.document.body.textContent).toContain("No open Renovate pull requests");
+    expect(page.document.querySelector('nav a[href="#/changes"]')).toBeNull();
+    await page.close();
+  });
 });

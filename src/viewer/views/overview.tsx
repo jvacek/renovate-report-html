@@ -1,4 +1,6 @@
+import { allOpenChanges } from "../../report/changes.ts";
 import type { ReportData } from "../../report/data.ts";
+import { changeTerms } from "../../report/platform.ts";
 import type { Summary } from "../../report/stats.ts";
 import { BarList, plural, Stat, UPDATE_TYPE_ORDER, UpdateBadge } from "../components.tsx";
 import { href } from "../router.ts";
@@ -7,6 +9,8 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
   const pending = Object.values(summary.updatesByType).reduce((a, b) => a + b, 0);
   const reposWithProblems = data.repositories.filter((r) => r.problems.length > 0);
   const skipped = Object.values(summary.skippedByReason).reduce((a, b) => a + b, 0);
+  const openChanges = allOpenChanges(data.repositories).length;
+  const terms = changeTerms(data.repositories[0]?.platform);
 
   return (
     <>
@@ -17,6 +21,7 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
         <Stat label="Dependencies with updates" value={summary.depsWithUpdates} />
         <Stat label="Pending updates" value={pending} />
         <Stat label="Skipped" value={skipped} />
+        {openChanges > 0 && <Stat label={`Open ${terms.short}s`} value={<a href={href.changes()}>{openChanges}</a>} />}
         <Stat
           label="Problems"
           value={<a href={href.problems()}>{summary.problems}</a>}

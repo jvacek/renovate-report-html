@@ -1,9 +1,11 @@
 import { useMemo } from "preact/hooks";
-import { type OpenChange, openChangesByUse } from "../report/changes.ts";
+import { allOpenChanges, type OpenChange, openChangesByUse } from "../report/changes.ts";
 import type { ReportData } from "../report/data.ts";
+import { changeTerms } from "../report/platform.ts";
 import { type DepRef, type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
 import { href, type Route, useRoute } from "./router.ts";
 import { ThemeSwitcher } from "./theme-switcher.tsx";
+import { ChangesView } from "./views/changes.tsx";
 import { Overview } from "./views/overview.tsx";
 import { PackageView } from "./views/package.tsx";
 import { PackagesView } from "./views/packages.tsx";
@@ -16,6 +18,8 @@ export function App({ data }: { data: ReportData }) {
   const summary = useMemo(() => summarize(data), [data]);
   const packages = useMemo(() => packageIndex(data.repositories), [data]);
   const changesFor = useMemo(() => openChangesByUse(data.repositories), [data]);
+  const openChangeCount = useMemo(() => allOpenChanges(data.repositories).length, [data]);
+  const terms = changeTerms(data.repositories[0]?.platform);
 
   return (
     <>
@@ -27,7 +31,11 @@ export function App({ data }: { data: ReportData }) {
           <NavLink route={route} to="overview" label="Overview" />
           <NavLink route={route} to="repos" label="Repositories" />
           <NavLink route={route} to="packages" label="Packages" />
-          <NavLink route={route} to="problems" label="Problems" count={summary.problems} />
+          {/* Lookup and local runs have no branch data, so the page would always be empty. */}
+          {openChangeCount > 0 && (
+            <NavLink route={route} to="changes" label={`Open ${terms.short}s`} count={openChangeCount} />
+          )}
+          <NavLink route={route} to="problems" label="Problems" count={summary.problems} warn />
         </nav>
         <ThemeSwitcher />
       </header>
@@ -47,18 +55,20 @@ function NavLink({
   to,
   label,
   count,
+  warn,
 }: {
   route: Route;
-  to: "overview" | "repos" | "packages" | "problems";
+  to: "overview" | "repos" | "packages" | "changes" | "problems";
   label: string;
   count?: number;
+  warn?: boolean;
 }) {
   const active =
     route.name === to || (to === "packages" && route.name === "package") || (to === "repos" && route.name === "repo");
   return (
     <a href={href[to]()} class={active ? "active" : undefined} aria-current={active ? "page" : undefined}>
       {label}
-      {count ? <span class="badge level-warn nav-count">{count}</span> : null}
+      {count ? <span class={`badge nav-count${warn ? " level-warn" : ""}`}>{count}</span> : null}
     </a>
   );
 }
@@ -95,6 +105,8 @@ function Page({
         <NotFound what={`package ${route.id}`} />
       );
     }
+    case "changes":
+      return <ChangesView data={data} />;
     case "problems":
       return <ProblemsView data={data} />;
     case "notFound":

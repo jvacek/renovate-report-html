@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { hasOpenChanges, isOpenChange, openChanges, openChangesByUse } from "../src/report/changes.ts";
+import {
+  allOpenChanges,
+  hasOpenChanges,
+  isOpenChange,
+  openChanges,
+  openChangesByUse,
+  upgradesByType,
+} from "../src/report/changes.ts";
 import { toReportData } from "../src/report/data.ts";
 import { parseReport } from "../src/report/schema.ts";
 import { allDeps } from "../src/report/stats.ts";
@@ -28,12 +35,33 @@ describe("isOpenChange", () => {
   });
 });
 
+describe("upgradesByType", () => {
+  it("counts upgrades per update type, unknown when Renovate gave none", () => {
+    const branch = {
+      branchName: "renovate/x",
+      upgrades: [{ updateType: "minor" }, { updateType: "minor" }, { updateType: "patch" }, {}],
+    };
+    expect(upgradesByType(branch)).toEqual({
+      minor: 2,
+      patch: 1,
+      unknown: 1,
+    });
+  });
+});
+
 describe("open changes", () => {
   const data = reportWithOpenPr();
   const express = data.repositories.find((r) => r.name === "expressjs/express");
 
   it("lists open PRs per repository and skips closed ones", () => {
     expect(express && openChanges(express).map((c) => c.branch.prNo)).toEqual([42]);
+  });
+
+  it("lists open PRs across all repositories", () => {
+    expect(allOpenChanges(data.repositories).map((c) => [c.repo.name, c.branch.prNo])).toEqual([
+      ["expressjs/express", 42],
+    ]);
+    expect(allOpenChanges(lookupData().repositories)).toEqual([]);
   });
 
   it("finds the PR for each dependency it updates", () => {

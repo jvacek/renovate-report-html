@@ -8,6 +8,7 @@ export type Route =
   | ({ name: "packages" } & PackageFilter)
   | { name: "package"; id: string }
   | { name: "problems" }
+  | { name: "changes" }
   | { name: "notFound"; path: string };
 
 export interface PackageFilter {
@@ -40,6 +41,8 @@ export function parseHash(hash: string): Route {
       return param ? { name: "package", id: param } : { name: "packages", ...NO_FILTER };
     case "problems":
       return { name: "problems" };
+    case "changes":
+      return { name: "changes" };
     default:
       return { name: "notFound", path };
   }
@@ -58,6 +61,7 @@ export const href = {
   },
   package: (id: string) => `#/package/${encodeURIComponent(id)}`,
   problems: () => "#/problems",
+  changes: () => "#/changes",
 };
 
 export function useRoute(): Route {

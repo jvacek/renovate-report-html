@@ -10,6 +10,7 @@ describe("router", () => {
     ["#/repo/", { name: "repos" }],
     ["#/packages", { name: "packages", query: "", datasources: [] }],
     ["#/package/npm%3A%40types%2Fnode", { name: "package", id: "npm:@types/node" }],
+    ["#/changes", { name: "changes" }],
     ["#/nope", { name: "notFound", path: "nope" }],
   ])("parses %s", (hash, route) => {
     expect(parseHash(hash)).toEqual(route);

@@ -1,15 +1,15 @@
 import { useState } from "preact/hooks";
-import { type OpenChange, openChanges } from "../../report/changes.ts";
+import { openChanges } from "../../report/changes.ts";
 import type { Dep, ReportData, Repository } from "../../report/data.ts";
 import { changeTerms, hasIconSlot, platformLinks, repoIcon } from "../../report/platform.ts";
 import { allDeps, packageId } from "../../report/stats.ts";
 import {
   Age,
-  ChangeLink,
   type Column,
   CurrentVersion,
+  changeColumns,
+  changeUpdateTypes,
   ExternalButton,
-  orderUpdateTypes,
   ProblemList,
   plural,
   RepoAvatar,
@@ -17,8 +17,8 @@ import {
   SortableTable,
   StalenessLegend,
   Stat,
-  UpdateBadge,
   Updates,
+  UpdateTypesLegend,
 } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
@@ -69,42 +69,6 @@ const depColumns: Column<Dep>[] = [
   },
 ];
 
-function changeColumns(term: string, platformUrl?: string): Column<OpenChange>[] {
-  return [
-    {
-      label: term,
-      class: "num",
-      descFirst: true,
-      sort: (c) => c.branch.prNo,
-      render: (c) => <ChangeLink change={c} platformUrl={platformUrl} />,
-    },
-    { label: "Title", sort: (c) => c.branch.prTitle, render: (c) => c.branch.prTitle },
-    {
-      label: "Updates",
-      descFirst: true,
-      sort: (c) => c.branch.upgrades.length,
-      render: (c) => (
-        <span class="badges">
-          {orderUpdateTypes(c.branch.upgrades.map((u) => u.updateType ?? "unknown")).map((type) => (
-            <UpdateBadge key={type} type={type} />
-          ))}{" "}
-          {plural(c.branch.upgrades.length, "update")}
-        </span>
-      ),
-    },
-    {
-      label: "Branch",
-      sort: (c) => c.branch.branchName,
-      render: (c) => (
-        <>
-          <code>{c.branch.branchName}</code>
-          {c.branch.baseBranch && <span class="muted"> into {c.branch.baseBranch}</span>}
-        </>
-      ),
-    },
-  ];
-}
-
 function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   if (onlyUpdates && dep.updates.length === 0) return false;
   if (!filter) return true;
@@ -117,6 +81,7 @@ export function RepoView({ repo, report }: { repo: Repository; report: ReportDat
   const links = platformLinks(repo, platformUrl);
   const terms = changeTerms(repo.platform);
   const changes = openChanges(repo);
+  const changeTypes = changeUpdateTypes(changes);
   const [filter, setFilter] = useState("");
   const [onlyUpdates, setOnlyUpdates] = useState(false);
   const deps = [...allDeps([repo])].map((ref) => ref.dep);
@@ -174,13 +139,16 @@ export function RepoView({ repo, report }: { repo: Repository; report: ReportDat
               no branches for this repository.
             </p>
           ) : (
-            <SortableTable
-              columns={changeColumns(terms.short, platformUrl)}
-              rows={changes}
-              rowKey={(c) => c.branch.branchName}
-              initialSort={{ column: 0, desc: true }}
-              empty={`No open Renovate ${terms.long}s.`}
-            />
+            <>
+              {changes.length > 0 && <UpdateTypesLegend types={changeTypes} />}
+              <SortableTable
+                columns={changeColumns(terms.short, changeTypes, platformUrl)}
+                rows={changes}
+                rowKey={(c) => c.branch.branchName}
+                initialSort={{ column: 0, desc: true }}
+                empty={`No open Renovate ${terms.long}s.`}
+              />
+            </>
           )}
         </section>
       )}

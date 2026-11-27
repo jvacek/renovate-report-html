@@ -20,6 +20,21 @@ export function openChanges(repo: Repository): OpenChange[] {
   return repo.branches.filter(isOpenChange).map((branch) => ({ repo, branch }));
 }
 
+/** How many of a branch's upgrades are of each update type. */
+export function upgradesByType(branch: Branch): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const upgrade of branch.upgrades) {
+    const type = upgrade.updateType ?? "unknown";
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/** Open changes across all repositories, in repository order. */
+export function allOpenChanges(repos: Repository[]): OpenChange[] {
+  return repos.flatMap(openChanges);
+}
+
 /** Whether any repository has an open change. Lookup runs and local runs have no branch data, so never do. */
 export function hasOpenChanges(repos: Repository[]): boolean {
   return repos.some((repo) => repo.branches.some(isOpenChange));
