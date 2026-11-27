@@ -22,6 +22,16 @@ describe("platformLinks", () => {
     expect(links?.avatar).toBe("https://gitlab.com/api/v4/projects/gitlab-org%2Ffrontend%2Feslint-plugin/avatar");
   });
 
+  it("links files on a branch, or the default branch when unknown", () => {
+    const github = platformLinks({ name: "expressjs/express", platform: "github" });
+    expect(github?.file("infra/main.tf", "main")).toBe("https://github.com/expressjs/express/blob/main/infra/main.tf");
+    expect(github?.file("package.json")).toBe("https://github.com/expressjs/express/blob/HEAD/package.json");
+    const gitlab = platformLinks({ name: "team/app", platform: "gitlab" });
+    expect(gitlab?.file("a b/pyproject.toml", "release/1.x")).toBe(
+      "https://gitlab.com/team/app/-/blob/release/1.x/a%20b/pyproject.toml",
+    );
+  });
+
   it("has no repository icon on GitHub", () => {
     expect(platformLinks({ name: "expressjs/express", platform: "github" })?.avatar).toBeUndefined();
   });

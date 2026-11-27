@@ -8,6 +8,13 @@ export interface PlatformLinks {
   changesLabel: string;
   changes: string;
   change: (number: number) => string;
+  /** A file in the repository, on `branch` or else the default branch (`HEAD`). */
+  file: (path: string, branch?: string) => string;
+}
+
+/** Encode each path segment but keep the slashes. */
+function encodePath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
 }
 
 /** What the platform calls a change request: GitLab has merge requests, the rest pull requests. */
@@ -83,6 +90,7 @@ export function platformLinks(repo: { name: string; platform?: string }, baseUrl
         changesLabel: "Pull requests",
         changes: `${repoUrl}/pulls`,
         change: (n) => `${repoUrl}/pull/${n}`,
+        file: (path, branch = "HEAD") => `${repoUrl}/blob/${encodePath(branch)}/${encodePath(path)}`,
       };
     case "gitlab":
       return {
@@ -91,6 +99,7 @@ export function platformLinks(repo: { name: string; platform?: string }, baseUrl
         changesLabel: "Merge requests",
         changes: `${repoUrl}/-/merge_requests`,
         change: (n) => `${repoUrl}/-/merge_requests/${n}`,
+        file: (path, branch = "HEAD") => `${repoUrl}/-/blob/${encodePath(branch)}/${encodePath(path)}`,
       };
     default:
       return undefined;
