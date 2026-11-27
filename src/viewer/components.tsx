@@ -335,10 +335,13 @@ export function SortableTable<T>({
   initialSort?: { column: number; desc: boolean };
   empty?: string;
 }) {
-  const [sort, setSort] = useState(initialSort);
+  // Kept by label, so hiding a column doesn't move the sort onto another one.
+  const [sort, setSort] = useState(
+    () => initialSort && { label: columns[initialSort.column]?.label, desc: initialSort.desc },
+  );
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set());
   const shown = useMemo(() => {
-    const by = sort && columns[sort.column]?.sort;
+    const by = sort && columns.find((column) => column.label === sort.label)?.sort;
     const dir = sort?.desc ? -1 : 1;
     const out: ShownRow<T>[] = [];
     const walk = (list: T[], depth: number, parentKey: string) => {
@@ -377,8 +380,8 @@ export function SortableTable<T>({
       <table>
         <thead>
           <tr>
-            {columns.map((column, i) => {
-              const active = sort?.column === i;
+            {columns.map((column) => {
+              const active = sort?.label === column.label;
               const ariaSort = active ? (sort.desc ? "descending" : "ascending") : undefined;
               return (
                 <th key={column.label} scope="col" class={column.class} aria-sort={ariaSort} title={column.title}>
@@ -389,7 +392,7 @@ export function SortableTable<T>({
                         class="sort"
                         onClick={() =>
                           setSort({
-                            column: i,
+                            label: column.label,
                             desc: active ? !sort.desc : Boolean(column.descFirst),
                           })
                         }
