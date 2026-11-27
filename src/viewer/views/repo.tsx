@@ -24,7 +24,6 @@ import {
   SortableTable,
   Stat,
   Updates,
-  UpdateTypesLegend,
 } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
@@ -173,7 +172,6 @@ export function RepoView({
             </EmptyState>
           ) : (
             <>
-              {changes.length > 0 && <UpdateTypesLegend types={changeTypes} />}
               <SortableTable
                 columns={changeColumns(terms.short, changeTypes, platformUrl)}
                 rows={changes}
@@ -188,7 +186,6 @@ export function RepoView({
                     Renovate has these {terms.long}s ready but has not opened them, because it reached one of its
                     limits. They open on a later run once there is room.
                   </p>
-                  <UpdateTypesLegend types={heldBackTypes} />
                   <SortableTable
                     columns={heldBackColumns(terms.short, heldBackTypes)}
                     rows={heldBack}

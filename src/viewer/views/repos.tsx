@@ -13,7 +13,7 @@ import {
   RepoLink,
   SortableTable,
   UpdateCounts,
-  UpdateTypesLegend,
+  updateTypesInfo,
 } from "../components.tsx";
 import { GroupCell, type RepoView, RepoViewToggle, useRepoView } from "../repo-view.tsx";
 
@@ -145,7 +145,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
     },
     {
       label: "Updates",
-      title: `Available updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
+      info: updateTypesInfo(updateTypes, "Available updates"),
       descFirst: true,
       sort: (r) => r.updates,
       render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
@@ -221,7 +221,6 @@ export function ReposView({ data }: { data: ReportData }) {
         </span>
         {nested && <RepoViewToggle view={activeView} onChange={setView} />}
       </div>
-      {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
       <SortableTable
         columns={columns}
         rows={rows}

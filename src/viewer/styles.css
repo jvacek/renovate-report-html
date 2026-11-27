@@ -451,17 +451,12 @@ h3::before {
   margin: 0 0 0.4rem;
 }
 
-.age-key {
+.info-key {
   display: grid;
   gap: 0.15rem;
   margin: 0;
   padding: 0;
   list-style: none;
-}
-
-.legend {
-  font-size: 0.85em;
-  margin: 0.25rem 0 0.5rem;
 }
 
 .table-wrap {
@@ -566,14 +561,15 @@ th {
   margin-left: 0.2em;
 }
 
-/* In right-aligned columns the arrow goes first, so the label lines up with the numbers. */
-.num .sort {
+/* Label, then the (i), then the arrow, so the (i) sits next to its label. */
+.th-content {
   display: inline-flex;
-  flex-direction: row-reverse;
   align-items: baseline;
 }
 
+/* In right-aligned columns the arrow goes first, so the label lines up with the numbers. */
 .num .sort-arrow {
+  order: -1;
   margin: 0 0.2em 0 0;
   text-align: right;
 }
@@ -697,7 +693,7 @@ th {
   color: var(--ancient);
 }
 
-.age-key .age {
+.info-key .age {
   font-weight: 400;
 }
 

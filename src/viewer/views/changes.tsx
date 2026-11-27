@@ -14,7 +14,6 @@ import {
   SortableTable,
   Stat,
   UpdateCounts,
-  UpdateTypesLegend,
 } from "../components.tsx";
 import { GroupCell, type RepoView, RepoViewToggle, useRepoView } from "../repo-view.tsx";
 
@@ -146,17 +145,14 @@ function ChangeTable<T extends Change>({
   );
   const rows = useMemo(() => rowsFor(changes, view), [changes, view]);
   return (
-    <>
-      {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
-      <SortableTable
-        columns={columns}
-        rows={rows}
-        rowKey={rowKey}
-        childrenOf={view === "folders" ? childrenOf : undefined}
-        initialSort={{ column: 0, desc: false }}
-        empty="Nothing matches the filter."
-      />
-    </>
+    <SortableTable
+      columns={columns}
+      rows={rows}
+      rowKey={rowKey}
+      childrenOf={view === "folders" ? childrenOf : undefined}
+      initialSort={{ column: 0, desc: false }}
+      empty="Nothing matches the filter."
+    />
   );
 }
 

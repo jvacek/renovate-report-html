@@ -357,26 +357,30 @@ export function SortableTable<T>({
               const ariaSort = active ? (sort.desc ? "descending" : "ascending") : undefined;
               return (
                 <th key={column.label} scope="col" class={column.class} aria-sort={ariaSort} title={column.title}>
-                  {column.sort ? (
-                    <button
-                      type="button"
-                      class="sort"
-                      onClick={() =>
-                        setSort({
-                          column: i,
-                          desc: active ? !sort.desc : Boolean(column.descFirst),
-                        })
-                      }
-                    >
-                      {column.label}
+                  <span class="th-content">
+                    {column.sort ? (
+                      <button
+                        type="button"
+                        class="sort"
+                        onClick={() =>
+                          setSort({
+                            column: i,
+                            desc: active ? !sort.desc : Boolean(column.descFirst),
+                          })
+                        }
+                      >
+                        {column.label}
+                      </button>
+                    ) : (
+                      column.label
+                    )}
+                    {column.info && <InfoTip label={`About ${column.label}`}>{column.info}</InfoTip>}
+                    {column.sort && (
                       <span class="sort-arrow" aria-hidden="true">
                         {active ? (sort.desc ? "▼" : "▲") : ""}
                       </span>
-                    </button>
-                  ) : (
-                    column.label
-                  )}
-                  {column.info && <InfoTip label={`About ${column.label}`}>{column.info}</InfoTip>}
+                    )}
+                  </span>
                 </th>
               );
             })}
@@ -419,7 +423,7 @@ export function SortableTable<T>({
 export const ageInfo = (
   <>
     <p>How long ago the version in use was released.</p>
-    <ul class="age-key">
+    <ul class="info-key">
       <li>
         <span class="age age-fresh">under 3 mo</span>
       </li>
@@ -499,7 +503,11 @@ export function InfoTip({ label, children }: { label: string; children: Componen
         class="info-button"
         aria-label={label}
         aria-expanded={open}
-        onClick={() => setPinned(!pinned)}
+        onClick={() => {
+          // A second click closes it even while hovered, so taps on touch screens toggle it.
+          if (pinned) setHovered(false);
+          setPinned(!pinned);
+        }}
         onPointerEnter={enter}
         onPointerLeave={leave}
       >
@@ -551,7 +559,7 @@ export function orderUpdateTypes(types: string[]): string[] {
 /**
  * Update counts in fixed slots, one per type in `types`, so the same type lines
  * up across table rows even when a row lacks it or counts have more digits.
- * The colour says the type; UpdateTypesLegend explains it.
+ * The colour says the type; updateTypesInfo explains it.
  */
 export function UpdateCounts({ counts, types }: { counts: Record<string, number>; types: string[] }) {
   return (
@@ -569,16 +577,19 @@ export function UpdateCounts({ counts, types }: { counts: Record<string, number>
   );
 }
 
-export function UpdateTypesLegend({ types }: { types: string[] }) {
+/** Explains the slots of an UpdateCounts column; goes in its `info`. */
+export function updateTypesInfo(types: string[], what = "Updates"): ComponentChildren {
   return (
-    <p class="legend muted">
-      Updates by type:{" "}
-      {types.map((type) => (
-        <span key={type} class={`update-type type-${type}`}>
-          {type}
-        </span>
-      ))}
-    </p>
+    <>
+      <p>{what} by type, one slot each, in this order. Sorts by the total.</p>
+      <ul class="info-key">
+        {types.map((type) => (
+          <li key={type}>
+            <span class={`update-type type-${type}`}>{type}</span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -670,7 +681,7 @@ export function heldBackColumns(
 function updatesColumn<T extends { branch: Branch }>(updateTypes: string[]): Column<T> {
   return {
     label: "Updates",
-    title: `Updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
+    info: updateTypesInfo(updateTypes),
     descFirst: true,
     sort: (c) => c.branch.upgrades.length,
     render: (c) => <UpdateCounts counts={upgradesByType(c.branch)} types={updateTypes} />,
