@@ -365,6 +365,40 @@ h3::before {
   border-radius: var(--radius);
 }
 
+/* Secondary controls, pushed to the right of the search box. */
+.toolbar-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-left: auto;
+}
+
+.jump-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9em;
+}
+
+.jump-label {
+  margin-right: 0.15rem;
+  color: var(--muted);
+}
+
+.jump-link {
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.jump-link:hover {
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .legend {
   font-size: 0.85em;
   margin: 0.25rem 0 0.5rem;

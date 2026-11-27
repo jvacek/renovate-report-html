@@ -211,21 +211,29 @@ export function RepoView({
             onInput={(e) => setFilter(e.currentTarget.value)}
             aria-label="Filter dependencies"
           />
-          <label>
-            <input type="checkbox" checked={onlyUpdates} onChange={(e) => setOnlyUpdates(e.currentTarget.checked)} />{" "}
-            Only with updates
-          </label>
-          <span class="muted">
-            Managers:{" "}
-            {repo.managers.map((m, i) => (
-              <span key={m.name}>
-                {i > 0 && ", "}
-                <a href={`#manager-${m.name}`} onClick={(e) => scrollToId(e, `manager-${m.name}`)}>
+          <div class="toolbar-end">
+            <nav class="jump-links" aria-label="Jump to manager">
+              <span class="jump-label">Jump to</span>
+              {repo.managers.map((m) => (
+                <a
+                  key={m.name}
+                  class="jump-link"
+                  href={`#manager-${m.name}`}
+                  onClick={(e) => scrollToId(e, `manager-${m.name}`)}
+                >
                   {m.name}
                 </a>
-              </span>
-            ))}
-          </span>
+              ))}
+            </nav>
+            <button
+              type="button"
+              class="filter-chip"
+              aria-pressed={onlyUpdates}
+              onClick={() => setOnlyUpdates(!onlyUpdates)}
+            >
+              Only with updates <span class="count">{outdated}</span>
+            </button>
+          </div>
         </div>
         <StalenessLegend />
         {repo.managers.map((manager) => {
