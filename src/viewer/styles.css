@@ -478,8 +478,9 @@ h3::before {
   padding: 0.25rem 0;
 }
 
+/* Stronger than --border, which barely shows on the popup's background. */
 .info-row + .info-row {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
 }
 
 .info-meaning {
