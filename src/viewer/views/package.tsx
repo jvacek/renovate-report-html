@@ -164,21 +164,25 @@ export function PackageView({
         {usage.latest && <Stat label="Newest available" value={usage.latest} />}
         {changeCount > 0 && <Stat label={`Open Renovate ${terms.short}s`} value={changeCount} />}
       </div>
-      <h2>Versions in use</h2>
-      <SortableTable
-        columns={versionColumns(report)}
-        rows={versions}
-        rowKey={(v) => v.version}
-        initialSort={{ column: 1, desc: true }}
-      />
-      <h2>All uses</h2>
-      <StalenessLegend />
-      <SortableTable
-        columns={columns}
-        rows={usage.usages}
-        rowKey={(r) => `${r.repo}:${r.packageFile}:${r.dep.depType}`}
-        initialSort={{ column: 5, desc: true }}
-      />
+      <section>
+        <h2>Versions in use</h2>
+        <SortableTable
+          columns={versionColumns(report)}
+          rows={versions}
+          rowKey={(v) => v.version}
+          initialSort={{ column: 1, desc: true }}
+        />
+      </section>
+      <section>
+        <h2>All uses</h2>
+        <StalenessLegend />
+        <SortableTable
+          columns={columns}
+          rows={usage.usages}
+          rowKey={(r) => `${r.repo}:${r.packageFile}:${r.dep.depType}`}
+          initialSort={{ column: 5, desc: true }}
+        />
+      </section>
     </>
   );
 }

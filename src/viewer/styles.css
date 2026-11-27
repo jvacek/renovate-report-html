@@ -79,9 +79,14 @@ h2 {
   font-size: 1.35rem;
   font-weight: 650;
   line-height: 1.3;
-  margin: 2.5rem 0 0.9rem;
+  margin: 2rem 0 0.9rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border);
+}
+
+/* Room under a section's last table or box, before the next heading. */
+section:not(.callout):has(> h2) {
+  padding-bottom: 1.25rem;
 }
 
 /* Subsections: smaller and marked with an accent bar, so they never read as a new section. */
