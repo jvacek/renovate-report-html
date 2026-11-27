@@ -6,12 +6,12 @@ import { changeTerms, splitRepoName } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import {
   Age,
+  ageInfo,
   type Column,
   Count,
   orderUpdateTypes,
   RepoLink,
   SortableTable,
-  StalenessLegend,
   UpdateCounts,
   UpdateTypesLegend,
 } from "../components.tsx";
@@ -153,6 +153,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
     ...changes,
     {
       label: "Median age",
+      info: ageInfo,
       class: "num",
       descFirst: true,
       sort: (r) => r.medianAge,
@@ -160,6 +161,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
     },
     {
       label: "Oldest",
+      info: ageInfo,
       class: "num",
       descFirst: true,
       sort: (r) => r.oldestAge,
@@ -219,7 +221,6 @@ export function ReposView({ data }: { data: ReportData }) {
         </span>
         {nested && <RepoViewToggle view={activeView} onChange={setView} />}
       </div>
-      <StalenessLegend />
       {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
       <SortableTable
         columns={columns}

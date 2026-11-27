@@ -5,6 +5,7 @@ import { changeTerms, hasIconSlot, platformLinks, repoIcon } from "../../report/
 import { allDeps, type DepRef, packageId } from "../../report/stats.ts";
 import {
   Age,
+  ageInfo,
   type Column,
   CurrentVersion,
   changeColumns,
@@ -21,7 +22,6 @@ import {
   RepoName,
   type RowChanges,
   SortableTable,
-  StalenessLegend,
   Stat,
   Updates,
   UpdateTypesLegend,
@@ -51,6 +51,7 @@ const baseDepColumns: Column<Dep>[] = [
   { label: "Current", render: (d) => <CurrentVersion dep={d} /> },
   {
     label: "Age",
+    info: ageInfo,
     class: "num",
     descFirst: true,
     sort: (d) => d.currentVersionAgeInDays,
@@ -231,7 +232,6 @@ export function RepoView({
             </label>
           </div>
         </div>
-        <StalenessLegend />
         {repo.managers.map((manager) => {
           const files = manager.packageFiles
             .map((file) => ({

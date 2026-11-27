@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import { type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
-import { Age, type Column, Count, DepName, SortableTable, StalenessLegend } from "../components.tsx";
+import { Age, ageInfo, type Column, Count, DepName, SortableTable } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href, type PackageFilter, replaceHash } from "../router.ts";
 
@@ -68,6 +68,7 @@ const columns: Column<PackageRow>[] = [
   { label: "Newest available", render: (r) => <span class="version">{r.usage.latest}</span> },
   {
     label: "Oldest in use",
+    info: ageInfo,
     class: "num",
     descFirst: true,
     sort: (r) => r.usage.maxAgeInDays,
@@ -138,7 +139,6 @@ export function PackagesView({ packages, filter }: { packages: PackageUsage[]; f
           </button>
         )}
       </fieldset>
-      <StalenessLegend />
       <SortableTable
         columns={columns}
         rows={filtered}

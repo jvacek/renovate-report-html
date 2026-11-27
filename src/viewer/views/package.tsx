@@ -12,6 +12,7 @@ import {
 } from "../../report/stats.ts";
 import {
   Age,
+  ageInfo,
   type Column,
   Count,
   CurrentVersion,
@@ -22,7 +23,6 @@ import {
   RepoLink,
   RepoList,
   SortableTable,
-  StalenessLegend,
   Stat,
   Updates,
 } from "../components.tsx";
@@ -65,6 +65,7 @@ function baseColumns(newest: string | undefined, report: ReportData): Column<Dep
     },
     {
       label: "Age",
+      info: ageInfo,
       class: "num",
       descFirst: true,
       sort: (r) => r.dep.currentVersionAgeInDays,
@@ -93,6 +94,7 @@ const versionColumns = (report: ReportData): Column<VersionCount>[] => [
   { label: "Uses", class: "num", descFirst: true, sort: (v) => v.uses, render: (v) => <Count value={v.uses} /> },
   {
     label: "Age",
+    info: ageInfo,
     class: "num",
     descFirst: true,
     sort: (v) => v.ageInDays,
@@ -175,7 +177,6 @@ export function PackageView({
       </section>
       <section>
         <h2>All uses</h2>
-        <StalenessLegend />
         <SortableTable
           columns={columns}
           rows={usage.usages}

@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact";
-import { useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { describeLimit, type HeldBackChange, type OpenChange, upgradesByType } from "../report/changes.ts";
 import type { Branch, Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
 import { tokenizeJson } from "../report/json-tokens.ts";
@@ -271,6 +271,8 @@ export interface Column<T> {
   label: string;
   /** Tooltip on the header. */
   title?: string;
+  /** Explanation behind an (i) button in the header. */
+  info?: ComponentChildren;
   render: (row: T) => ComponentChildren;
   /** Value to sort by. Columns without one are not sortable. Missing values sort last. */
   sort?: (row: T) => string | number | undefined;
@@ -374,6 +376,7 @@ export function SortableTable<T>({
                   ) : (
                     column.label
                   )}
+                  {column.info && <InfoTip label={`About ${column.label}`}>{column.info}</InfoTip>}
                 </th>
               );
             })}
@@ -412,13 +415,109 @@ export function SortableTable<T>({
   );
 }
 
-export function StalenessLegend() {
+/** Explains the age colours; goes in the `info` of age columns. */
+export const ageInfo = (
+  <>
+    <p>How long ago the version in use was released.</p>
+    <ul class="age-key">
+      <li>
+        <span class="age age-fresh">under 3 mo</span>
+      </li>
+      <li>
+        <span class="age age-aging">under 1 y</span>
+      </li>
+      <li>
+        <span class="age age-stale">under 2 y</span>
+      </li>
+      <li>
+        <span class="age age-ancient">2 y or more</span>
+      </li>
+    </ul>
+  </>
+);
+
+/**
+ * An (i) button with a tooltip that opens on hover or click. The tooltip is fixed-positioned,
+ * so the scrolling table around it can't clip it. A click pins it open until a click elsewhere or Escape.
+ */
+export function InfoTip({ label, children }: { label: string; children: ComponentChildren }) {
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number }>();
+  const button = useRef<HTMLButtonElement>(null);
+  const tip = useRef<HTMLDivElement>(null);
+  const open = hovered || pinned;
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    // Below the button, centred on it, kept 8px inside the viewport. Follows it on scroll.
+    const place = () => {
+      if (!button.current || !tip.current) return;
+      const anchor = button.current.getBoundingClientRect();
+      const width = tip.current.offsetWidth;
+      const left = Math.min(Math.max(8, anchor.left + anchor.width / 2 - width / 2), window.innerWidth - width - 8);
+      setPos({ top: anchor.bottom + 6, left });
+    };
+    place();
+    const close = () => {
+      setHovered(false);
+      setPinned(false);
+    };
+    const onPointer = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (!button.current?.contains(target) && !tip.current?.contains(target)) close();
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", place, { capture: true, passive: true });
+    window.addEventListener("resize", place);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", place, { capture: true });
+      window.removeEventListener("resize", place);
+    };
+  }, [open]);
+
+  // A short delay before closing on hover-out, so the pointer can cross from the button to the tooltip.
+  const leaveTimer = useRef<number | undefined>(undefined);
+  const enter = () => {
+    clearTimeout(leaveTimer.current);
+    setHovered(true);
+  };
+  const leave = () => {
+    leaveTimer.current = window.setTimeout(() => setHovered(false), 120);
+  };
+  useEffect(() => () => clearTimeout(leaveTimer.current), []);
+
   return (
-    <p class="legend muted">
-      Age of the version in use: <span class="age age-fresh">under 3 mo</span>{" "}
-      <span class="age age-aging">under 1 y</span> <span class="age age-stale">under 2 y</span>{" "}
-      <span class="age age-ancient">2 y or more</span>
-    </p>
+    <span class="info-tip">
+      <button
+        ref={button}
+        type="button"
+        class="info-button"
+        aria-label={label}
+        aria-expanded={open}
+        onClick={() => setPinned(!pinned)}
+        onPointerEnter={enter}
+        onPointerLeave={leave}
+      >
+        i
+      </button>
+      {open && (
+        <div
+          ref={tip}
+          role="tooltip"
+          class="info-popup"
+          style={pos ? { top: `${pos.top}px`, left: `${pos.left}px` } : { visibility: "hidden" }}
+          onPointerEnter={enter}
+          onPointerLeave={leave}
+        >
+          {children}
+        </div>
+      )}
+    </span>
   );
 }
 
