@@ -1,13 +1,14 @@
 import { useState } from "preact/hooks";
-import { openChanges } from "../../report/changes.ts";
+import { type OpenChange, openChanges } from "../../report/changes.ts";
 import type { Dep, ReportData, Repository } from "../../report/data.ts";
 import { changeTerms, hasIconSlot, platformLinks, repoIcon } from "../../report/platform.ts";
-import { allDeps, packageId } from "../../report/stats.ts";
+import { allDeps, type DepRef, packageId } from "../../report/stats.ts";
 import {
   Age,
   type Column,
   CurrentVersion,
   changeColumns,
+  changesColumn,
   changeUpdateTypes,
   ExternalButton,
   ProblemList,
@@ -23,7 +24,7 @@ import {
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href } from "../router.ts";
 
-const depColumns: Column<Dep>[] = [
+const baseDepColumns: Column<Dep>[] = [
   {
     label: "Dependency",
     sort: (d) => d.name,
@@ -69,6 +70,17 @@ const depColumns: Column<Dep>[] = [
   },
 ];
 
+/** With `changesOf`, an open PR/MR column follows Updates. */
+function depColumns(changes?: { label: string; of: (dep: Dep) => OpenChange[]; platformUrl?: string }): Column<Dep>[] {
+  if (!changes) return baseDepColumns;
+  const at = baseDepColumns.findIndex((c) => c.label === "Updates") + 1;
+  return [
+    ...baseDepColumns.slice(0, at),
+    changesColumn(changes.label, changes.of, changes.platformUrl),
+    ...baseDepColumns.slice(at),
+  ];
+}
+
 function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   if (onlyUpdates && dep.updates.length === 0) return false;
   if (!filter) return true;
@@ -76,7 +88,15 @@ function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
   return [dep.name, dep.packageName, dep.depType, dep.datasource].some((v) => v?.toLowerCase().includes(needle));
 }
 
-export function RepoView({ repo, report }: { repo: Repository; report: ReportData }) {
+export function RepoView({
+  repo,
+  report,
+  changesFor,
+}: {
+  repo: Repository;
+  report: ReportData;
+  changesFor: (ref: DepRef) => OpenChange[];
+}) {
   const { platformUrl } = report;
   const links = platformLinks(repo, platformUrl);
   const terms = changeTerms(repo.platform);
@@ -203,7 +223,16 @@ export function RepoView({ repo, report }: { repo: Repository; report: ReportDat
                     </span>
                   </summary>
                   <SortableTable
-                    columns={depColumns}
+                    columns={depColumns(
+                      changes.length > 0
+                        ? {
+                            label: `Open ${terms.short}`,
+                            of: (dep) =>
+                              changesFor({ repo: repo.name, manager: manager.name, packageFile: file.path, dep }),
+                            platformUrl,
+                          }
+                        : undefined,
+                    )}
                     rows={file.shown}
                     rowKey={(d) => `${d.depType}:${d.name}:${d.currentValue}`}
                     initialSort={{ column: 3, desc: true }}

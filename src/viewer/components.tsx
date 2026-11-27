@@ -469,6 +469,22 @@ export function ExternalButton({
   );
 }
 
+/** The open changes that touch each row, as links. Sorts by the first one's number. */
+export function changesColumn<T>(label: string, changesOf: (row: T) => OpenChange[], platformUrl?: string): Column<T> {
+  return {
+    label,
+    descFirst: true,
+    sort: (r) => changesOf(r)[0]?.branch.prNo,
+    render: (r) =>
+      changesOf(r).map((change, i) => (
+        <span key={change.branch.branchName}>
+          {i > 0 && ", "}
+          <ChangeLink change={change} platformUrl={platformUrl} />
+        </span>
+      )),
+  };
+}
+
 /** The update types that occur in `changes`, in order: one slot each in the Updates column. */
 export function changeUpdateTypes(changes: OpenChange[]): string[] {
   return orderUpdateTypes(changes.flatMap((c) => c.branch.upgrades.map((u) => u.updateType ?? "unknown")));

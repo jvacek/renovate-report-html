@@ -12,10 +12,10 @@ import {
 } from "../../report/stats.ts";
 import {
   Age,
-  ChangeLink,
   type Column,
   Count,
   CurrentVersion,
+  changesColumn,
   ExternalButton,
   RepoLink,
   RepoList,
@@ -71,21 +71,6 @@ function baseColumns(newest: string | undefined, report: ReportData): Column<Dep
       render: (r) => r.dep.skipReason && <span class="badge skipped">skipped: {r.dep.skipReason}</span>,
     },
   ];
-}
-
-function changesColumn(label: string, changesFor: (ref: DepRef) => OpenChange[], platformUrl?: string): Column<DepRef> {
-  return {
-    label,
-    descFirst: true,
-    sort: (r) => changesFor(r)[0]?.branch.prNo,
-    render: (r) =>
-      changesFor(r).map((change, i) => (
-        <span key={change.branch.branchName}>
-          {i > 0 && ", "}
-          <ChangeLink change={change} platformUrl={platformUrl} />
-        </span>
-      )),
-  };
 }
 
 const versionColumns = (report: ReportData): Column<VersionCount>[] => [
