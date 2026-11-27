@@ -2,53 +2,20 @@ import { useMemo, useState } from "preact/hooks";
 import { hasOpenChanges, openChanges } from "../../report/changes.ts";
 import type { ReportData, Repository } from "../../report/data.ts";
 import { buildFolderTree, type Folder } from "../../report/groups.ts";
-import { changeTerms, groupIcon, hasIconSlot, splitRepoName } from "../../report/platform.ts";
+import { changeTerms, splitRepoName } from "../../report/platform.ts";
 import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import {
   Age,
   type Column,
   Count,
   orderUpdateTypes,
-  RepoAvatar,
   RepoLink,
   SortableTable,
   StalenessLegend,
   UpdateCounts,
   UpdateTypesLegend,
 } from "../components.tsx";
-
-/** How repository names show: the full path, the project name alone, or nested in group folders. */
-type RepoView = "paths" | "names" | "folders";
-
-const VIEWS: { value: RepoView; label: string }[] = [
-  { value: "paths", label: "Full paths" },
-  { value: "names", label: "Names" },
-  { value: "folders", label: "Folders" },
-];
-
-const VIEW_KEY = "renovate-report-html:repos-view";
-
-function readView(): RepoView {
-  try {
-    const value = localStorage.getItem(VIEW_KEY);
-    return VIEWS.find((view) => view.value === value)?.value ?? "folders";
-  } catch {
-    return "folders";
-  }
-}
-
-function useRepoView(): [RepoView, (view: RepoView) => void] {
-  const [view, setView] = useState(readView);
-  const choose = (next: RepoView) => {
-    setView(next);
-    try {
-      localStorage.setItem(VIEW_KEY, next);
-    } catch {
-      // Site data blocked: the choice still applies to this page view.
-    }
-  };
-  return [view, choose];
-}
+import { GroupCell, type RepoView, RepoViewToggle, useRepoView } from "../repo-view.tsx";
 
 /** One repository, or a group folder with the totals of every repository below it. */
 interface RepoRow {
@@ -130,17 +97,7 @@ const childrenOf = (row: RepoRow) => row.folder?.children;
 
 function RepoCell({ row, data, hidePath }: { row: RepoRow; data: ReportData; hidePath: boolean }) {
   const { repo, folder } = row;
-  if (folder) {
-    const platform = folder.first.platform;
-    return hasIconSlot(folder.first, data) ? (
-      <span class="with-icon">
-        <RepoAvatar url={groupIcon(folder.path, platform, data)} name={folder.path} />
-        <span title={folder.path}>{row.label}</span>
-      </span>
-    ) : (
-      <span title={folder.path}>{row.label}</span>
-    );
-  }
+  if (folder) return <GroupCell path={folder.path} label={row.label} first={folder.first} data={data} />;
   return repo ? <RepoLink name={repo.name} report={data} hidePath={hidePath} /> : null;
 }
 
@@ -223,10 +180,9 @@ const rowKey = (row: RepoRow) => row.key;
 export function ReposView({ data }: { data: ReportData }) {
   const { repositories } = data;
   const [filter, setFilter] = useState("");
-  const [view, setView] = useRepoView();
   // Only offer other views when names have a path to hide or nest.
   const nested = repositories.some((repo) => repo.name.includes("/"));
-  const activeView = nested ? view : "paths";
+  const [activeView, setView] = useRepoView(nested);
   // One slot per update type that occurs anywhere, so counts line up across rows.
   const updateTypes = useMemo(() => orderUpdateTypes(Object.keys(statsOf(repositories).updatesByType)), [repositories]);
   const columns = useMemo(
@@ -261,20 +217,7 @@ export function ReposView({ data }: { data: ReportData }) {
         <span class="muted">
           {matching.length} of {repositories.length}
         </span>
-        {nested && (
-          <fieldset class="segmented" aria-label="Show repositories as">
-            {VIEWS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={activeView === option.value}
-                onClick={() => setView(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </fieldset>
-        )}
+        {nested && <RepoViewToggle view={activeView} onChange={setView} />}
       </div>
       <StalenessLegend />
       {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
