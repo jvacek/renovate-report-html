@@ -1,5 +1,5 @@
 import type { ReportData } from "../../report/data.ts";
-import { ProblemList, RepoName } from "../components.tsx";
+import { EmptyState, ProblemList, RepoName } from "../components.tsx";
 import { href } from "../router.ts";
 
 export function ProblemsView({ data }: { data: ReportData }) {
@@ -10,7 +10,7 @@ export function ProblemsView({ data }: { data: ReportData }) {
       <p class="muted">
         Warnings and errors Renovate reported while processing. Global problems are not tied to a repository.
       </p>
-      {data.problems.length === 0 && repos.length === 0 && <p>Renovate reported no problems.</p>}
+      {data.problems.length === 0 && repos.length === 0 && <EmptyState>Renovate reported no problems.</EmptyState>}
       {data.problems.length > 0 && (
         <section>
           <h2>Global</h2>

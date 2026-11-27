@@ -30,6 +30,15 @@ export function Count({ value, format = String }: { value?: number; format?: (va
   return Number(text) === 0 ? <span class="empty">{text}</span> : <>{text}</>;
 }
 
+/** Stands in for a section's content when there is none. */
+export function EmptyState({ children }: { children: ComponentChildren }) {
+  return (
+    <div class="empty-state">
+      <p>{children}</p>
+    </div>
+  );
+}
+
 const shortDigest = (digest: string) => digest.replace(/^sha256:/, "").slice(0, 7);
 
 /** A dep's name; unnamed ones show the text Renovate found in the file instead. */
@@ -238,7 +247,7 @@ export function BarList({
     .sort((a, b) => (counts[b] ?? 0) - (counts[a] ?? 0));
   const keys = [...known, ...rest];
   const max = Math.max(1, ...Object.values(counts));
-  if (keys.length === 0) return <p class="muted">None.</p>;
+  if (keys.length === 0) return <EmptyState>None.</EmptyState>;
   return (
     <ul class="bars">
       {keys.map((key) => (
@@ -335,7 +344,7 @@ export function SortableTable<T>({
       return next;
     });
 
-  if (rows.length === 0) return <p class="muted">{empty}</p>;
+  if (rows.length === 0) return <EmptyState>{empty}</EmptyState>;
   return (
     <div class="table-wrap">
       <table>

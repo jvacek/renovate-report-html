@@ -7,6 +7,7 @@ import {
   type Column,
   changeColumns,
   changeUpdateTypes,
+  EmptyState,
   heldBackColumns,
   plural,
   RepoLink,
@@ -192,10 +193,10 @@ export function ChangesView({ data }: { data: ReportData }) {
       <h1>Open {terms.long}s</h1>
       <p class="muted">Renovate {terms.long}s that are open, across all repositories.</p>
       {open.length + heldBack.length === 0 ? (
-        <p>
+        <EmptyState>
           No open Renovate {terms.long}s. Renovate leaves them out of the report when run with{" "}
           <code>--dry-run=lookup</code>.
-        </p>
+        </EmptyState>
       ) : (
         <>
           <div class="stats">
@@ -217,7 +218,7 @@ export function ChangesView({ data }: { data: ReportData }) {
           {open.length > 0 ? (
             <ChangeTable changes={shownOpen} perChange={openColumns} term={terms.short} data={data} view={view} />
           ) : (
-            <p class="muted">No open Renovate {terms.long}s.</p>
+            <EmptyState>No open Renovate {terms.long}s.</EmptyState>
           )}
           {heldBack.length > 0 && (
             <section id="held-back">

@@ -11,6 +11,7 @@ import {
   changesColumn,
   changeUpdateTypes,
   DepName,
+  EmptyState,
   ExternalButton,
   heldBackColumns,
   Occurrences,
@@ -165,10 +166,10 @@ export function RepoView({
         <section>
           <h2>Open Renovate {terms.long}s</h2>
           {repo.branches.length === 0 ? (
-            <p class="muted">
+            <EmptyState>
               No {terms.long} data. Renovate leaves it out when run with <code>--dry-run=lookup</code>, or when it has
               no branches for this repository.
-            </p>
+            </EmptyState>
           ) : (
             <>
               {changes.length > 0 && <UpdateTypesLegend types={changeTypes} />}
