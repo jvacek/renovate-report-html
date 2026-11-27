@@ -71,15 +71,6 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
           <BarList counts={summary.skippedByReason} />
         </section>
       </div>
-
-      <p class="actions">
-        <a class="button" href={href.repos()}>
-          View all {plural(summary.repositories, "repository", "repositories")}
-        </a>
-        <a class="button" href={href.packages()}>
-          Browse packages
-        </a>
-      </p>
     </>
   );
 }
