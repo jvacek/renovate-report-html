@@ -515,11 +515,19 @@ td {
   padding: 0.4rem 0.7rem;
   text-align: left;
   vertical-align: top;
+}
+
+/*
+ * Lines above each row rather than below, so the last row needs no :last-child rule: browsers
+ * can keep a stale :last-child style when sorting moves rows, leaving a line missing. With
+ * collapsed borders, the header's bottom line and the first row's top line are one line.
+ */
+th {
   border-bottom: 1px solid var(--border);
 }
 
-tbody tr:last-child td {
-  border-bottom: none;
+td {
+  border-top: 1px solid var(--border);
 }
 
 /* Faint dividers so neighbouring columns don't run together. */
