@@ -225,14 +225,10 @@ export function RepoView({
                 </a>
               ))}
             </nav>
-            <button
-              type="button"
-              class="filter-chip"
-              aria-pressed={onlyUpdates}
-              onClick={() => setOnlyUpdates(!onlyUpdates)}
-            >
+            <label class="filter-chip">
+              <input type="checkbox" checked={onlyUpdates} onChange={(e) => setOnlyUpdates(e.currentTarget.checked)} />
               Only with updates <span class="count">{outdated}</span>
-            </button>
+            </label>
           </div>
         </div>
         <StalenessLegend />

@@ -1032,7 +1032,18 @@ h1 .repo-avatar {
   color: var(--muted);
 }
 
-.filter-chip[aria-pressed="true"] {
+.filter-chip input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.filter-chip:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+.filter-chip[aria-pressed="true"],
+.filter-chip:has(:checked) {
   background: var(--info-bg);
   border-color: var(--accent);
 }
