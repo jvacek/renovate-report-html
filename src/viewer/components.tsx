@@ -32,6 +32,17 @@ export function Count({ value, format = String }: { value?: number; format?: (va
 
 const shortDigest = (digest: string) => digest.replace(/^sha256:/, "").slice(0, 7);
 
+/** A dep's name; unnamed ones show the text Renovate found in the file instead. */
+export function DepName({ dep }: { dep: Dep }) {
+  return dep.unnamed ? (
+    <code title="Renovate could not name this reference, usually because it contains a variable. This is the text found in the file.">
+      {dep.name}
+    </code>
+  ) : (
+    <>{dep.name}</>
+  );
+}
+
 export function CurrentVersion({ dep }: { dep: Dep }) {
   const version = dep.currentVersion ?? dep.lockedVersion;
   const value = dep.currentValue;

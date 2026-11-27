@@ -10,6 +10,7 @@ import {
   changeColumns,
   changesColumn,
   changeUpdateTypes,
+  DepName,
   ExternalButton,
   heldBackColumns,
   ProblemList,
@@ -33,7 +34,9 @@ const baseDepColumns: Column<Dep>[] = [
     render: (d) => (
       <span class="with-icon">
         <DatasourceIcon datasource={d.datasource} />
-        <a href={href.package(packageId(d))}>{d.name}</a>
+        <a href={href.package(packageId(d))}>
+          <DepName dep={d} />
+        </a>
       </span>
     ),
   },

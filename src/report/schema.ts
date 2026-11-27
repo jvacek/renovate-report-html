@@ -50,6 +50,8 @@ export const depSchema = z.object({
   sourceUrl: optionalString,
   homepage: optionalString,
   changelogUrl: optionalString,
+  /** The text Renovate matched in the file. Only used to name deps without a depName. */
+  replaceString: optionalString,
   updates: z.array(updateSchema).default([]),
   warnings: z.array(warningSchema).default([]),
 });

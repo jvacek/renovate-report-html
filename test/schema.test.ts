@@ -20,7 +20,7 @@ describe("parseReport", () => {
     for (const dep of deps) {
       expect(dep).not.toHaveProperty("autoReplaceStringTemplate");
       expect(dep).not.toHaveProperty("managerData");
-      expect(dep).not.toHaveProperty("replaceString");
+      expect(dep).not.toHaveProperty("versioning");
     }
   });
 

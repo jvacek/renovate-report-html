@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import { type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
-import { Age, type Column, Count, SortableTable, StalenessLegend } from "../components.tsx";
+import { Age, type Column, Count, DepName, SortableTable, StalenessLegend } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href, type PackageFilter, replaceHash } from "../router.ts";
 
@@ -34,7 +34,9 @@ const columns: Column<PackageRow>[] = [
     render: (r) => (
       <span class="with-icon">
         <DatasourceIcon datasource={r.usage.datasource} />
-        <a href={href.package(r.usage.id)}>{r.usage.name}</a>
+        <a href={href.package(r.usage.id)}>
+          {r.usage.usages[0]?.dep.unnamed ? <DepName dep={r.usage.usages[0].dep} /> : r.usage.name}
+        </a>
       </span>
     ),
   },

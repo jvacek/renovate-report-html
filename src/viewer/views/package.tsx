@@ -16,6 +16,7 @@ import {
   Count,
   CurrentVersion,
   changesColumn,
+  DepName,
   ExternalButton,
   RepoLink,
   RepoList,
@@ -133,7 +134,7 @@ export function PackageView({
       </p>
       <h1 class="with-icon">
         <DatasourceIcon datasource={usage.datasource} />
-        {usage.name}
+        {first?.unnamed ? <DepName dep={first} /> : usage.name}
       </h1>
       <p class="muted">
         {usage.datasource && <>Datasource {usage.datasource}. </>}

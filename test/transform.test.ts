@@ -10,7 +10,13 @@ import {
   summarize,
   versionCounts,
 } from "../src/report/stats.ts";
-import { fullReport, lookupData } from "./helpers.ts";
+import { fullReport, lookupData, readFixture } from "./helpers.ts";
+
+/** The deps of a single package file, as the viewer gets them. */
+function depsOf(deps: unknown[]) {
+  const report = parseReport({ repositories: { "a/b": { packageFiles: { npm: [{ packageFile: "p", deps }] } } } });
+  return [...allDeps(toReportData(report).repositories)].map((ref) => ref.dep);
+}
 
 describe("toReportData", () => {
   const data = lookupData();
@@ -95,8 +101,27 @@ describe("toReportData", () => {
         },
       },
     });
-    const names = [...allDeps(toReportData(report).repositories)].map((ref) => ref.dep.name);
-    expect(names).toEqual(["only-pkg", "(unnamed)"]);
+    const deps = [...allDeps(toReportData(report).repositories)].map((ref) => ref.dep);
+    expect(deps.map((d) => [d.name, d.unnamed])).toEqual([
+      ["only-pkg", undefined],
+      ["(unnamed)", true],
+    ]);
+  });
+
+  it("names unnamed deps by the text found in the file, and drops that text otherwise", () => {
+    const deps = depsOf([
+      { replaceString: "$PROXY/alpine:3", skipReason: "contains-variable" },
+      { depName: "alpine", replaceString: "alpine:3" },
+    ]);
+    expect(deps[0]).toMatchObject({ name: "$PROXY/alpine:3", unnamed: true });
+    expect(deps[1]).toEqual({ name: "alpine", updates: [], warnings: [] });
+  });
+
+  it("keeps each variable reference in the gitlab fixture apart", () => {
+    const data = toReportData(parseReport(readFixture("gitlab-report-full")));
+    const unnamed = [...allDeps(data.repositories)].filter((ref) => ref.dep.unnamed);
+    expect(unnamed.length).toBeGreaterThan(0);
+    expect(unnamed.every((ref) => ref.dep.name.includes("$"))).toBe(true);
   });
 
   it("normalises object warnings to strings", () => {

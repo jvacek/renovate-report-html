@@ -69,8 +69,11 @@ export interface PackageFile {
 export type Update = z.infer<typeof updateSchema>;
 export type Branch = z.infer<typeof branchSchema>;
 
-export interface Dep extends Omit<RawDep, "depName" | "warnings"> {
+export interface Dep extends Omit<RawDep, "depName" | "warnings" | "replaceString"> {
+  /** `depName`, else `packageName`, else the text Renovate found in the file (see `unnamed`). */
   name: string;
+  /** Renovate gave no name, typically because the reference contains a variable. */
+  unnamed?: true;
   warnings: string[];
 }
 
@@ -104,10 +107,12 @@ export function toProblem(raw: RawProblem): Problem {
   return { level: raw.level, message: raw.msg, context, payloads };
 }
 
-function toDep({ depName, warnings, ...rest }: RawDep): Dep {
+export function toDep({ depName, replaceString, warnings, ...rest }: RawDep): Dep {
+  const name = depName ?? rest.packageName;
   return {
     ...rest,
-    name: depName ?? rest.packageName ?? "(unnamed)",
+    name: name ?? replaceString ?? "(unnamed)",
+    ...(name === undefined && { unnamed: true as const }),
     warnings: warnings.map((w) => (typeof w === "string" ? w : w.message)),
   };
 }
