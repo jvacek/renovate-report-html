@@ -1,5 +1,5 @@
 import { useMemo, useState } from "preact/hooks";
-import { hasBranchData, openChanges } from "../../report/changes.ts";
+import { hasOpenChanges, openChanges } from "../../report/changes.ts";
 import type { ReportData, Repository } from "../../report/data.ts";
 import { buildFolderTree, type Folder } from "../../report/groups.ts";
 import { changeTerms, groupIcon, hasIconSlot, splitRepoName } from "../../report/platform.ts";
@@ -7,12 +7,14 @@ import { allDeps, updateTypeOf } from "../../report/stats.ts";
 import {
   Age,
   type Column,
+  Count,
   orderUpdateTypes,
   RepoAvatar,
   RepoLink,
   SortableTable,
   StalenessLegend,
   UpdateCounts,
+  UpdateTypesLegend,
 } from "../components.tsx";
 
 /** How repository names show: the full path, the project name alone, or nested in group folders. */
@@ -142,7 +144,7 @@ function RepoCell({ row, data, hidePath }: { row: RepoRow; data: ReportData; hid
   return repo ? <RepoLink name={repo.name} report={data} hidePath={hidePath} /> : null;
 }
 
-/** `changesLabel` is unset when the report has no branch data, which hides the column. */
+/** `changesLabel` is unset when no repository has an open change, which hides the column. */
 function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, changesLabel?: string): Column<RepoRow>[] {
   const changes: Column<RepoRow>[] = changesLabel
     ? [
@@ -151,7 +153,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
           class: "num",
           descFirst: true,
           sort: (r) => r.openChanges,
-          render: (r) => r.openChanges || "",
+          render: (r) => <Count value={r.openChanges} />,
         },
       ]
     : [];
@@ -166,13 +168,27 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       class: "num",
       descFirst: true,
       sort: (r) => r.problems,
-      render: (r) => (r.problems ? <span class="badge level-warn">{r.problems}</span> : ""),
+      // Blank when there are none, so the warning badges stand out.
+      render: (r) => (r.problems ? <span class="badge level-warn">{r.problems}</span> : null),
     },
-    { label: "Managers", class: "num", descFirst: true, sort: (r) => r.managers, render: (r) => r.managers },
-    { label: "Deps", class: "num", descFirst: true, sort: (r) => r.deps, render: (r) => r.deps },
-    { label: "Outdated", class: "num", descFirst: true, sort: (r) => r.outdated, render: (r) => r.outdated },
+    {
+      label: "Managers",
+      class: "num",
+      descFirst: true,
+      sort: (r) => r.managers,
+      render: (r) => <Count value={r.managers} />,
+    },
+    { label: "Deps", class: "num", descFirst: true, sort: (r) => r.deps, render: (r) => <Count value={r.deps} /> },
+    {
+      label: "Outdated",
+      class: "num",
+      descFirst: true,
+      sort: (r) => r.outdated,
+      render: (r) => <Count value={r.outdated} />,
+    },
     {
       label: "Updates",
+      title: `Available updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
       descFirst: true,
       sort: (r) => r.updates,
       render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
@@ -197,7 +213,7 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       class: "num",
       descFirst: true,
       sort: (r) => r.libYears,
-      render: (r) => (r.libYears === undefined ? "" : r.libYears.toFixed(1)),
+      render: (r) => <Count value={r.libYears} format={(years) => years.toFixed(1)} />,
     },
   ];
 }
@@ -211,16 +227,18 @@ export function ReposView({ data }: { data: ReportData }) {
   // Only offer other views when names have a path to hide or nest.
   const nested = repositories.some((repo) => repo.name.includes("/"));
   const activeView = nested ? view : "paths";
-  // One slot per update type that occurs anywhere, so chips line up across rows.
+  // One slot per update type that occurs anywhere, so counts line up across rows.
+  const updateTypes = useMemo(() => orderUpdateTypes(Object.keys(statsOf(repositories).updatesByType)), [repositories]);
   const columns = useMemo(
     () =>
       columnsFor(
-        orderUpdateTypes(Object.keys(statsOf(repositories).updatesByType)),
+        updateTypes,
         data,
         activeView,
-        hasBranchData(repositories) ? `Open ${changeTerms(repositories[0]?.platform).short}s` : undefined,
+        // A column of zeros says nothing, so it only shows when some repository has an open change.
+        hasOpenChanges(repositories) ? `Open ${changeTerms(repositories[0]?.platform).short}s` : undefined,
       ),
-    [repositories, data, activeView],
+    [updateTypes, repositories, data, activeView],
   );
   const needle = filter.trim().toLowerCase();
   const matching = useMemo(
@@ -259,6 +277,7 @@ export function ReposView({ data }: { data: ReportData }) {
         )}
       </div>
       <StalenessLegend />
+      {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
       <SortableTable
         columns={columns}
         rows={rows}

@@ -14,13 +14,20 @@ export function formatAge(days: number): string {
 }
 
 export function Age({ days, timestamp }: { days?: number; timestamp?: string }) {
-  if (days === undefined) return <span class="muted">n/a</span>;
+  if (days === undefined) return <span class="empty">n/a</span>;
   const title = timestamp ? `Released ${timestamp.slice(0, 10)} (${days} days ago)` : `${days} days old`;
   return (
     <span class={`age age-${staleness(days)}`} title={title}>
       {formatAge(days)}
     </span>
   );
+}
+
+/** A number for a table cell, muted when it shows zero or is missing, so the values that matter stand out. */
+export function Count({ value, format = String }: { value?: number; format?: (value: number) => string }) {
+  if (value === undefined) return <span class="empty">n/a</span>;
+  const text = format(value);
+  return Number(text) === 0 ? <span class="empty">{text}</span> : <>{text}</>;
 }
 
 const shortDigest = (digest: string) => digest.replace(/^sha256:/, "").slice(0, 7);
@@ -30,7 +37,7 @@ export function CurrentVersion({ dep }: { dep: Dep }) {
   const value = dep.currentValue;
   return (
     <span class="version">
-      {value ?? version ?? <span class="muted">none</span>}
+      {value ?? version ?? <span class="empty">none</span>}
       {value && version && version !== value && <span class="muted"> ({version})</span>}
       {dep.currentDigest && <span class="muted digest"> @{shortDigest(dep.currentDigest)}</span>}
     </span>
@@ -186,18 +193,24 @@ export function Stat({ label, value, tone }: { label: string; value: ComponentCh
   );
 }
 
-/** Horizontal bars for a set of counts, largest first unless `order` is given. */
+/**
+ * Horizontal bars for a set of counts, largest first unless `order` is given.
+ * Keys in `always` get a bar even when they have no count, so the set looks complete.
+ */
 export function BarList({
-  counts,
+  counts: given,
   order,
+  always = [],
   classFor,
   label = (key) => key,
 }: {
   counts: Record<string, number>;
   order?: string[];
+  always?: string[];
   classFor?: (key: string) => string;
   label?: (key: string) => ComponentChildren;
 }) {
+  const counts = { ...Object.fromEntries(always.map((key) => [key, 0])), ...given };
   const known = order?.filter((key) => key in counts) ?? [];
   const rest = Object.keys(counts)
     .filter((key) => !known.includes(key))
@@ -211,9 +224,13 @@ export function BarList({
         <li key={key}>
           <span class="bar-label">{label(key)}</span>
           <span class="bar-track">
-            <span class={`bar ${classFor?.(key) ?? ""}`} style={{ width: `${((counts[key] ?? 0) / max) * 100}%` }} />
+            {counts[key] ? (
+              <span class={`bar ${classFor?.(key) ?? ""}`} style={{ width: `${(counts[key] / max) * 100}%` }} />
+            ) : null}
           </span>
-          <span class="bar-count">{counts[key]}</span>
+          <span class="bar-count">
+            <Count value={counts[key]} />
+          </span>
         </li>
       ))}
     </ul>
@@ -222,6 +239,8 @@ export function BarList({
 
 export interface Column<T> {
   label: string;
+  /** Tooltip on the header. */
+  title?: string;
   render: (row: T) => ComponentChildren;
   /** Value to sort by. Columns without one are not sortable. Missing values sort last. */
   sort?: (row: T) => string | number | undefined;
@@ -305,7 +324,7 @@ export function SortableTable<T>({
               const active = sort?.column === i;
               const ariaSort = active ? (sort.desc ? "descending" : "ascending") : undefined;
               return (
-                <th key={column.label} scope="col" class={column.class} aria-sort={ariaSort}>
+                <th key={column.label} scope="col" class={column.class} aria-sort={ariaSort} title={column.title}>
                   {column.sort ? (
                     <button
                       type="button"
@@ -403,6 +422,7 @@ export function orderUpdateTypes(types: string[]): string[] {
 /**
  * Update counts in fixed slots, one per type in `types`, so the same type lines
  * up across table rows even when a row lacks it or counts have more digits.
+ * The colour says the type; UpdateTypesLegend explains it.
  */
 export function UpdateCounts({ counts, types }: { counts: Record<string, number>; types: string[] }) {
   return (
@@ -410,13 +430,26 @@ export function UpdateCounts({ counts, types }: { counts: Record<string, number>
       {types.map((type) => (
         <span key={type} class="update-count">
           {counts[type] ? (
-            <>
-              <UpdateBadge type={type} /> <span class="count">{counts[type]}</span>
-            </>
+            <span class={`update-chip count type-${type}`} title={`${counts[type]} ${type}`}>
+              {counts[type]}
+            </span>
           ) : null}
         </span>
       ))}
     </span>
+  );
+}
+
+export function UpdateTypesLegend({ types }: { types: string[] }) {
+  return (
+    <p class="legend muted">
+      Updates by type:{" "}
+      {types.map((type) => (
+        <span key={type} class={`update-type type-${type}`}>
+          {type}
+        </span>
+      ))}
+    </p>
   );
 }
 

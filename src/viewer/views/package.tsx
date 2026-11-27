@@ -14,6 +14,7 @@ import {
   Age,
   ChangeLink,
   type Column,
+  Count,
   CurrentVersion,
   ExternalButton,
   RepoLink,
@@ -98,7 +99,7 @@ const versionColumns = (report: ReportData): Column<VersionCount>[] => [
       </span>
     ),
   },
-  { label: "Uses", class: "num", descFirst: true, sort: (v) => v.uses, render: (v) => v.uses },
+  { label: "Uses", class: "num", descFirst: true, sort: (v) => v.uses, render: (v) => <Count value={v.uses} /> },
   {
     label: "Age",
     class: "num",

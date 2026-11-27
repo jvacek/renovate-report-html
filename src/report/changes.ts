@@ -20,9 +20,9 @@ export function openChanges(repo: Repository): OpenChange[] {
   return repo.branches.filter(isOpenChange).map((branch) => ({ repo, branch }));
 }
 
-/** Whether the report has branch data at all. Lookup runs and local runs don't. */
-export function hasBranchData(repos: Repository[]): boolean {
-  return repos.some((repo) => repo.branches.length > 0);
+/** Whether any repository has an open change. Lookup runs and local runs have no branch data, so never do. */
+export function hasOpenChanges(repos: Repository[]): boolean {
+  return repos.some((repo) => repo.branches.some(isOpenChange));
 }
 
 function useKey(repo: string, packageFile: string | undefined, id: string): string {

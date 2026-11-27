@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import { type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
-import { Age, type Column, SortableTable, StalenessLegend } from "../components.tsx";
+import { Age, type Column, Count, SortableTable, StalenessLegend } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href, type PackageFilter, replaceHash } from "../router.ts";
 
@@ -48,14 +48,14 @@ const columns: Column<PackageRow>[] = [
     class: "num",
     descFirst: true,
     sort: (r) => r.usage.repos.length,
-    render: (r) => r.usage.repos.length,
+    render: (r) => <Count value={r.usage.repos.length} />,
   },
   {
     label: "Uses",
     class: "num",
     descFirst: true,
     sort: (r) => r.usage.usages.length,
-    render: (r) => r.usage.usages.length,
+    render: (r) => <Count value={r.usage.usages.length} />,
   },
   {
     label: "Versions in use",

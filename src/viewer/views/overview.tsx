@@ -54,6 +54,7 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
           <BarList
             counts={summary.updatesByType}
             order={UPDATE_TYPE_ORDER}
+            always={["major", "minor", "patch"]}
             classFor={(type) => `type-${type}`}
             label={(type) => <UpdateBadge type={type} />}
           />

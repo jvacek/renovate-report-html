@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasBranchData, isOpenChange, openChanges, openChangesByUse } from "../src/report/changes.ts";
+import { hasOpenChanges, isOpenChange, openChanges, openChangesByUse } from "../src/report/changes.ts";
 import { toReportData } from "../src/report/data.ts";
 import { parseReport } from "../src/report/schema.ts";
 import { allDeps } from "../src/report/stats.ts";
@@ -49,8 +49,10 @@ describe("open changes", () => {
     }
   });
 
-  it("knows when a report has branch data", () => {
-    expect(hasBranchData(data.repositories)).toBe(true);
-    expect(hasBranchData(lookupData().repositories)).toBe(false);
+  it("knows when a report has open changes", () => {
+    expect(hasOpenChanges(data.repositories)).toBe(true);
+    // Branches, but none with an open PR.
+    expect(hasOpenChanges(toReportData(parseReport(fullReport())).repositories)).toBe(false);
+    expect(hasOpenChanges(lookupData().repositories)).toBe(false);
   });
 });

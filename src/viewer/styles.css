@@ -88,6 +88,11 @@ h3 {
   color: var(--muted);
 }
 
+/* Zeros and missing values: fainter than .muted so the numbers that matter stand out. */
+.empty {
+  color: color-mix(in srgb, var(--muted) 45%, var(--bg));
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -347,6 +352,11 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* Faint dividers so neighbouring columns don't run together. */
+:is(th, td) + :is(th, td) {
+  border-left: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+}
+
 tbody tr:hover {
   background: var(--bg-soft);
 }
@@ -419,6 +429,18 @@ th {
   width: 1em;
   font-size: 0.75em;
   margin-left: 0.2em;
+}
+
+/* In right-aligned columns the arrow goes first, so the label lines up with the numbers. */
+.num .sort {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  align-items: baseline;
+}
+
+.num .sort-arrow {
+  margin: 0 0.2em 0 0;
+  text-align: right;
 }
 
 .badge {
@@ -754,23 +776,43 @@ th {
   font-variant-numeric: tabular-nums;
 }
 
-/* Fixed slots so chips for the same update type line up between rows. */
+/* Fixed slots so counts for the same update type line up between rows. */
 .update-counts {
   display: inline-flex;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
+/* Wide enough for a three-digit chip, so slots keep their width when empty. */
 .update-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3em;
-  min-width: 5.6em;
-  white-space: nowrap;
+  min-width: 4.2ch;
+  text-align: center;
 }
 
-.update-count .count {
-  min-width: 2ch;
-  text-align: right;
+/* A ring in the type's colour, like .badge but sized to the number. */
+.update-chip {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.4em;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font-size: 0.85em;
+  line-height: 1.6;
+  text-align: center;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.update-chip,
+.update-type {
+  font-weight: 600;
+}
+
+/* Grey like .badge for types without a colour; :where() lets .type-* win. */
+:where(.update-chip, .update-type) {
+  color: var(--other);
+}
+
+.update-type + .update-type {
+  margin-left: 0.6em;
 }
 
 .with-icon {
