@@ -27,6 +27,8 @@
   --other: light-dark(#5f6673, #9aa1ad);
   --radius: 6px;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* A right-pointing triangle with soft corners, used as a mask; see .tree-toggle::before. */
+  --triangle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 12'%3E%3Cpath d='M1.1 1.5 8.9 6 1.1 10.5Z' stroke='%23000' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   &:has(> head > meta[name="color-scheme"][content="light"]) {
     color-scheme: light;
@@ -625,15 +627,64 @@ th .info-tip {
   width: 1.2em;
 }
 
-.tree-toggle::before {
-  content: "▸";
-  text-align: center;
-  color: var(--muted);
+/*
+ * Triangles are drawn, not "▸▾▲▼" glyphs: a glyph sits wherever the font puts it, usually below
+ * the middle of the line. Here the triangle is centred in its box, so it stays centred when
+ * rotated to point another way. The box is 0.72em wide, snug around the triangle at any rotation.
+ */
+.tree-toggle::before,
+th[aria-sort] .sort-arrow::before,
+details.column-picker > summary::after,
+.package-file > summary::before,
+.repo-list summary::before {
+  content: "";
+  flex: none;
+  width: 0.72em;
+  height: 1lh;
+  background: currentColor;
+  mask: var(--triangle) center / 0.6em 0.72em no-repeat;
   transition: rotate 0.1s;
 }
 
-.tree-toggle[aria-expanded="true"]::before {
+.tree-toggle::before {
+  /* With the margin it fills the 1.2em leaf slot. */
+  margin-right: 0.48em;
+  background: var(--muted);
+}
+
+.tree-toggle[aria-expanded="true"]::before,
+.package-file[open] > summary::before,
+.repo-list details[open] > summary::before,
+th[aria-sort="descending"] .sort-arrow::before,
+details.column-picker > summary::after {
   rotate: 90deg;
+}
+
+th[aria-sort="ascending"] .sort-arrow::before,
+details.column-picker[open] > summary::after {
+  rotate: -90deg;
+}
+
+/* Collapsible sections show the drawn triangle instead of the browser's marker. */
+.package-file > summary,
+.repo-list summary {
+  list-style: none;
+}
+
+.package-file > summary::-webkit-details-marker,
+.repo-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.package-file > summary::before,
+.repo-list summary::before {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 0.3em;
+}
+
+.package-file > summary::before {
+  background: var(--muted);
 }
 
 .tree-toggle:focus-visible {
@@ -647,13 +698,16 @@ th .info-tip {
 
 /* Pushed to the right edge of the column, away from the label and its (i). */
 .sort-arrow {
+  display: flex;
   flex: none;
+  justify-content: flex-end;
+  /* Centred, not on the baseline: the drawn triangle has no text to give it one. */
+  align-self: center;
   width: 1em;
   margin-left: auto;
   padding-left: 0.4em;
   box-sizing: content-box;
   font-size: 0.75em;
-  text-align: right;
   /* Clicks fall through to the sort button's overlay. */
   pointer-events: none;
 }
@@ -1308,7 +1362,7 @@ details.column-picker > summary::-webkit-details-marker {
 }
 
 details.column-picker > summary::after {
-  content: "▾";
+  font-size: 0.75em;
 }
 
 details.column-picker > summary:hover,

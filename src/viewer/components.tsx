@@ -421,11 +421,8 @@ export function SortableTable<T>({
                       column.label
                     )}
                     {column.info && <InfoTip label={`About ${column.label}`}>{column.info}</InfoTip>}
-                    {column.sort && (
-                      <span class="sort-arrow" aria-hidden="true">
-                        {active ? (sort.desc ? "▼" : "▲") : ""}
-                      </span>
-                    )}
+                    {/* The arrow is drawn in CSS from the header's aria-sort. */}
+                    {column.sort && <span class="sort-arrow" aria-hidden="true" />}
                   </span>
                 </th>
               );
