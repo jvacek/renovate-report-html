@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { type OpenChange, openChanges } from "../../report/changes.ts";
+import { type ChangesByUse, heldBackChanges, openChanges } from "../../report/changes.ts";
 import type { Dep, ReportData, Repository } from "../../report/data.ts";
 import { changeTerms, hasIconSlot, platformLinks, repoIcon } from "../../report/platform.ts";
 import { allDeps, type DepRef, packageId } from "../../report/stats.ts";
@@ -11,10 +11,12 @@ import {
   changesColumn,
   changeUpdateTypes,
   ExternalButton,
+  heldBackColumns,
   ProblemList,
   plural,
   RepoAvatar,
   RepoName,
+  type RowChanges,
   SortableTable,
   StalenessLegend,
   Stat,
@@ -70,15 +72,11 @@ const baseDepColumns: Column<Dep>[] = [
   },
 ];
 
-/** With `changesOf`, an open PR/MR column follows Updates. */
-function depColumns(changes?: { label: string; of: (dep: Dep) => OpenChange[]; platformUrl?: string }): Column<Dep>[] {
+/** With `changes`, an open PR/MR column follows Updates. */
+function depColumns(changes?: RowChanges<Dep>): Column<Dep>[] {
   if (!changes) return baseDepColumns;
   const at = baseDepColumns.findIndex((c) => c.label === "Updates") + 1;
-  return [
-    ...baseDepColumns.slice(0, at),
-    changesColumn(changes.label, changes.of, changes.platformUrl),
-    ...baseDepColumns.slice(at),
-  ];
+  return [...baseDepColumns.slice(0, at), changesColumn(`Open ${changes.term}`, changes), ...baseDepColumns.slice(at)];
 }
 
 function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
@@ -95,13 +93,21 @@ export function RepoView({
 }: {
   repo: Repository;
   report: ReportData;
-  changesFor: (ref: DepRef) => OpenChange[];
+  changesFor: ChangesByUse;
 }) {
   const { platformUrl } = report;
   const links = platformLinks(repo, platformUrl);
   const terms = changeTerms(repo.platform);
   const changes = openChanges(repo);
   const changeTypes = changeUpdateTypes(changes);
+  const heldBack = heldBackChanges(repo);
+  const heldBackTypes = changeUpdateTypes(heldBack);
+  const useOf = (manager: string, packageFile: string, dep: Dep): DepRef => ({
+    repo: repo.name,
+    manager,
+    packageFile,
+    dep,
+  });
   const [filter, setFilter] = useState("");
   const [onlyUpdates, setOnlyUpdates] = useState(false);
   const deps = [...allDeps([repo])].map((ref) => ref.dep);
@@ -168,6 +174,22 @@ export function RepoView({
                 initialSort={{ column: 0, desc: true }}
                 empty={`No open Renovate ${terms.long}s.`}
               />
+              {heldBack.length > 0 && (
+                <>
+                  <h3>Held back by limits</h3>
+                  <p class="muted">
+                    Renovate has these {terms.long}s ready but has not opened them, because it reached one of its
+                    limits. They open on a later run once there is room.
+                  </p>
+                  <UpdateTypesLegend types={heldBackTypes} />
+                  <SortableTable
+                    columns={heldBackColumns(terms.short, heldBackTypes)}
+                    rows={heldBack}
+                    rowKey={(c) => c.branch.branchName}
+                    initialSort={{ column: 0, desc: false }}
+                  />
+                </>
+              )}
             </>
           )}
         </section>
@@ -224,11 +246,11 @@ export function RepoView({
                   </summary>
                   <SortableTable
                     columns={depColumns(
-                      changes.length > 0
+                      changes.length + heldBack.length > 0
                         ? {
-                            label: `Open ${terms.short}`,
-                            of: (dep) =>
-                              changesFor({ repo: repo.name, manager: manager.name, packageFile: file.path, dep }),
+                            open: (dep) => changesFor.open(useOf(manager.name, file.path, dep)),
+                            heldBack: (dep) => changesFor.heldBack(useOf(manager.name, file.path, dep)),
+                            term: terms.short,
                             platformUrl,
                           }
                         : undefined,

@@ -514,6 +514,12 @@ th {
   color: var(--error-fg);
 }
 
+.badge.held-back {
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .badge.level-info {
   color: var(--info-fg);
 }

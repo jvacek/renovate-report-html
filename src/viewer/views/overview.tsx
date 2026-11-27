@@ -1,4 +1,4 @@
-import { allOpenChanges } from "../../report/changes.ts";
+import { allHeldBackChanges, allOpenChanges } from "../../report/changes.ts";
 import type { ReportData } from "../../report/data.ts";
 import { changeTerms } from "../../report/platform.ts";
 import type { Summary } from "../../report/stats.ts";
@@ -10,6 +10,7 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
   const reposWithProblems = data.repositories.filter((r) => r.problems.length > 0);
   const skipped = Object.values(summary.skippedByReason).reduce((a, b) => a + b, 0);
   const openChanges = allOpenChanges(data.repositories).length;
+  const heldBack = allHeldBackChanges(data.repositories).length;
   const terms = changeTerms(data.repositories[0]?.platform);
 
   return (
@@ -22,6 +23,7 @@ export function Overview({ data, summary }: { data: ReportData; summary: Summary
         <Stat label="Pending updates" value={pending} />
         <Stat label="Skipped" value={skipped} />
         {openChanges > 0 && <Stat label={`Open ${terms.short}s`} value={<a href={href.changes()}>{openChanges}</a>} />}
+        {heldBack > 0 && <Stat label="Held back by limits" value={<a href={href.changes()}>{heldBack}</a>} />}
         <Stat
           label="Problems"
           value={<a href={href.problems()}>{summary.problems}</a>}

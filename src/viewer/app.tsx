@@ -1,8 +1,8 @@
 import { useMemo } from "preact/hooks";
-import { allOpenChanges, type OpenChange, openChangesByUse } from "../report/changes.ts";
+import { allHeldBackChanges, allOpenChanges, type ChangesByUse, changesByUse } from "../report/changes.ts";
 import type { ReportData } from "../report/data.ts";
 import { changeTerms } from "../report/platform.ts";
-import { type DepRef, type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
+import { type PackageUsage, packageIndex, type Summary, summarize } from "../report/stats.ts";
 import { href, type Route, useRoute } from "./router.ts";
 import { ThemeSwitcher } from "./theme-switcher.tsx";
 import { ChangesView } from "./views/changes.tsx";
@@ -17,8 +17,9 @@ export function App({ data }: { data: ReportData }) {
   const route = useRoute();
   const summary = useMemo(() => summarize(data), [data]);
   const packages = useMemo(() => packageIndex(data.repositories), [data]);
-  const changesFor = useMemo(() => openChangesByUse(data.repositories), [data]);
+  const changesFor = useMemo(() => changesByUse(data.repositories), [data]);
   const openChangeCount = useMemo(() => allOpenChanges(data.repositories).length, [data]);
+  const heldBackCount = useMemo(() => allHeldBackChanges(data.repositories).length, [data]);
   const terms = changeTerms(data.repositories[0]?.platform);
 
   return (
@@ -32,7 +33,7 @@ export function App({ data }: { data: ReportData }) {
           <NavLink route={route} to="repos" label="Repositories" />
           <NavLink route={route} to="packages" label="Packages" />
           {/* Lookup and local runs have no branch data, so the page would always be empty. */}
-          {openChangeCount > 0 && (
+          {openChangeCount + heldBackCount > 0 && (
             <NavLink route={route} to="changes" label={`Open ${terms.short}s`} count={openChangeCount} />
           )}
           <NavLink route={route} to="problems" label="Problems" count={summary.problems} warn />
@@ -84,7 +85,7 @@ function Page({
   route: Route;
   summary: Summary;
   packages: PackageUsage[];
-  changesFor: (ref: DepRef) => OpenChange[];
+  changesFor: ChangesByUse;
 }) {
   switch (route.name) {
     case "overview":

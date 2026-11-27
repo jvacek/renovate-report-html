@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact";
 import { useMemo, useRef, useState } from "preact/hooks";
-import { type OpenChange, upgradesByType } from "../report/changes.ts";
-import type { Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
+import { describeLimit, type HeldBackChange, type OpenChange, upgradesByType } from "../report/changes.ts";
+import type { Branch, Dep, Payload, Problem, ReportData, Repository, Update } from "../report/data.ts";
 import { tokenizeJson } from "../report/json-tokens.ts";
 import { hasIconSlot, platformLinks, repoIcon, splitRepoName } from "../report/platform.ts";
 import { staleness, updateTypeOf } from "../report/stats.ts";
@@ -469,24 +469,100 @@ export function ExternalButton({
   );
 }
 
-/** The open changes that touch each row, as links. Sorts by the first one's number. */
-export function changesColumn<T>(label: string, changesOf: (row: T) => OpenChange[], platformUrl?: string): Column<T> {
+export interface RowChanges<T> {
+  open: (row: T) => OpenChange[];
+  heldBack: (row: T) => HeldBackChange[];
+  /** "PR" or "MR". */
+  term: string;
+  platformUrl?: string;
+}
+
+/**
+ * The changes that touch each row: open ones as links, then held back ones as a badge naming the
+ * limit. Sorts by the first open one's number.
+ */
+export function changesColumn<T>(label: string, changes: RowChanges<T>): Column<T> {
   return {
     label,
     descFirst: true,
-    sort: (r) => changesOf(r)[0]?.branch.prNo,
-    render: (r) =>
-      changesOf(r).map((change, i) => (
-        <span key={change.branch.branchName}>
-          {i > 0 && ", "}
-          <ChangeLink change={change} platformUrl={platformUrl} />
-        </span>
-      )),
+    sort: (r) => changes.open(r)[0]?.branch.prNo,
+    render: (r) => (
+      <span class="badges">
+        {changes.open(r).map((change, i) => (
+          <span key={change.branch.branchName}>
+            {i > 0 && ", "}
+            <ChangeLink change={change} platformUrl={changes.platformUrl} />
+          </span>
+        ))}
+        {changes.heldBack(r).map((change) => (
+          <LimitBadge key={change.branch.branchName} change={change} term={changes.term} />
+        ))}
+      </span>
+    ),
+  };
+}
+
+/** "branch limit" and the like: why Renovate has not opened a PR for this change yet. */
+export function LimitBadge({ change, term }: { change: HeldBackChange; term: string }) {
+  const { label, title } = describeLimit(change.limit, term);
+  const what = change.branch.prTitle ? `${change.branch.prTitle}: not opened yet. ` : "Not opened yet. ";
+  return (
+    <span class="badge held-back" title={`${what}${title}`}>
+      {label}
+    </span>
+  );
+}
+
+/**
+ * Columns for a table of changes a limit held back: title, limit, updates and branch.
+ * `updateTypes` are the slots of the Updates column (see `changeUpdateTypes`).
+ */
+export function heldBackColumns(
+  term: string,
+  updateTypes: string[],
+): [
+  title: Column<HeldBackChange>,
+  limit: Column<HeldBackChange>,
+  updates: Column<HeldBackChange>,
+  branch: Column<HeldBackChange>,
+] {
+  return [
+    { label: "Title", sort: (c) => c.branch.prTitle, render: (c) => c.branch.prTitle },
+    {
+      label: "Held back by",
+      sort: (c) => describeLimit(c.limit, term).label,
+      render: (c) => <LimitBadge change={c} term={term} />,
+    },
+    updatesColumn(updateTypes),
+    branchColumn(),
+  ];
+}
+
+function updatesColumn<T extends { branch: Branch }>(updateTypes: string[]): Column<T> {
+  return {
+    label: "Updates",
+    title: `Updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
+    descFirst: true,
+    sort: (c) => c.branch.upgrades.length,
+    render: (c) => <UpdateCounts counts={upgradesByType(c.branch)} types={updateTypes} />,
+  };
+}
+
+function branchColumn<T extends { branch: Branch }>(): Column<T> {
+  return {
+    label: "Branch",
+    sort: (c) => c.branch.branchName,
+    render: (c) => (
+      <>
+        <code>{c.branch.branchName}</code>
+        {c.branch.baseBranch && <span class="muted"> into {c.branch.baseBranch}</span>}
+      </>
+    ),
   };
 }
 
 /** The update types that occur in `changes`, in order: one slot each in the Updates column. */
-export function changeUpdateTypes(changes: OpenChange[]): string[] {
+export function changeUpdateTypes(changes: { branch: Branch }[]): string[] {
   return orderUpdateTypes(changes.flatMap((c) => c.branch.upgrades.map((u) => u.updateType ?? "unknown")));
 }
 
@@ -520,23 +596,8 @@ export function changeColumns(
       render: (c) => <ChangeLink change={c} platformUrl={platformUrl} />,
     },
     { label: "Title", sort: (c) => c.branch.prTitle, render: (c) => c.branch.prTitle },
-    {
-      label: "Updates",
-      title: `Updates by type, in this order: ${updateTypes.join(", ")}. Sorts by the total.`,
-      descFirst: true,
-      sort: (c) => c.branch.upgrades.length,
-      render: (c) => <UpdateCounts counts={upgradesByType(c.branch)} types={updateTypes} />,
-    },
-    {
-      label: "Branch",
-      sort: (c) => c.branch.branchName,
-      render: (c) => (
-        <>
-          <code>{c.branch.branchName}</code>
-          {c.branch.baseBranch && <span class="muted"> into {c.branch.baseBranch}</span>}
-        </>
-      ),
-    },
+    updatesColumn(updateTypes),
+    branchColumn(),
   ];
 }
 

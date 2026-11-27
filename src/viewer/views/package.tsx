@@ -1,4 +1,4 @@
-import type { OpenChange } from "../../report/changes.ts";
+import type { ChangesByUse } from "../../report/changes.ts";
 import type { ReportData } from "../../report/data.ts";
 import { changeTerms } from "../../report/platform.ts";
 import { registryLink } from "../../report/registry.ts";
@@ -106,16 +106,20 @@ export function PackageView({
   report,
 }: {
   usage: PackageUsage;
-  changesFor: (ref: DepRef) => OpenChange[];
+  changesFor: ChangesByUse;
   report: ReportData;
 }) {
-  const changes = usage.usages.flatMap(changesFor);
+  const changes = usage.usages.flatMap(changesFor.open);
   const changeCount = new Set(changes.map((c) => `${c.repo.name}#${c.branch.prNo}`)).size;
-  const terms = changeTerms(changes[0]?.repo.platform);
+  const heldBack = usage.usages.some((ref) => changesFor.heldBack(ref).length > 0);
+  const terms = changeTerms(report.repositories[0]?.platform);
   const base = baseColumns(newestInUse(usage), report);
-  const columns = changeCount
-    ? [...base.slice(0, 7), changesColumn(`Open ${terms.short}`, changesFor, report.platformUrl), ...base.slice(7)]
-    : base;
+  const changesCol = changesColumn(`Open ${terms.short}`, {
+    ...changesFor,
+    term: terms.short,
+    platformUrl: report.platformUrl,
+  });
+  const columns = changeCount || heldBack ? [...base.slice(0, 7), changesCol, ...base.slice(7)] : base;
   const first = usage.usages[0]?.dep;
   const links = usage.usages.find(({ dep }) => dep.sourceUrl || dep.homepage || dep.changelogUrl)?.dep;
   const registry = first && registryLink(first);

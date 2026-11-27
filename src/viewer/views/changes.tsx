@@ -1,12 +1,13 @@
 import { useMemo, useState } from "preact/hooks";
-import { allOpenChanges, type OpenChange, upgradesByType } from "../../report/changes.ts";
-import type { ReportData, Repository } from "../../report/data.ts";
+import { allHeldBackChanges, allOpenChanges, upgradesByType } from "../../report/changes.ts";
+import type { Branch, ReportData, Repository } from "../../report/data.ts";
 import { buildFolderTree, type Folder } from "../../report/groups.ts";
 import { changeTerms, splitRepoName } from "../../report/platform.ts";
 import {
   type Column,
   changeColumns,
   changeUpdateTypes,
+  heldBackColumns,
   plural,
   RepoLink,
   SortableTable,
@@ -16,21 +17,24 @@ import {
 } from "../components.tsx";
 import { GroupCell, type RepoView, RepoViewToggle, useRepoView } from "../repo-view.tsx";
 
-/** One open change, or a group folder with the totals of every change below it. */
-interface ChangeRow {
-  /** `repo#number` for changes, the group path for folders. */
+/** A change: open, or held back by a limit. */
+type Change = { repo: Repository; branch: Branch };
+
+/** One change, or a group folder with the totals of every change below it. */
+interface Row<T extends Change> {
+  /** The branch for changes, the group path for folders. */
   key: string;
   /** What the Repository column shows and sorts by. */
   label: string;
-  change?: OpenChange;
-  folder?: { path: string; children: ChangeRow[]; first: Repository; changes: number };
+  change?: T;
+  folder?: { path: string; children: Row<T>[]; first: Repository; changes: number };
   updatesByType: Record<string, number>;
   updates: number;
 }
 
-function changeRow(change: OpenChange, label: string): ChangeRow {
+function changeRow<T extends Change>(change: T, label: string): Row<T> {
   return {
-    key: `${change.repo.name}#${change.branch.prNo}`,
+    key: `${change.repo.name}:${change.branch.branchName}`,
     label,
     change,
     updatesByType: upgradesByType(change.branch),
@@ -38,10 +42,10 @@ function changeRow(change: OpenChange, label: string): ChangeRow {
   };
 }
 
-function folderRows(folder: Folder<OpenChange>): ChangeRow[] {
-  const changes = (f: Folder<OpenChange>): OpenChange[] => [...f.items, ...f.folders.flatMap(changes)];
+function folderRows<T extends Change>(folder: Folder<T>): Row<T>[] {
+  const changes = (f: Folder<T>): T[] => [...f.items, ...f.folders.flatMap(changes)];
   return [
-    ...folder.folders.map((sub): ChangeRow => {
+    ...folder.folders.map((sub): Row<T> => {
       const all = changes(sub);
       const updatesByType: Record<string, number> = {};
       for (const change of all) {
@@ -52,7 +56,7 @@ function folderRows(folder: Folder<OpenChange>): ChangeRow[] {
       return {
         key: sub.path,
         label: sub.label,
-        folder: { path: sub.path, children: folderRows(sub), first: (all[0] as OpenChange).repo, changes: all.length },
+        folder: { path: sub.path, children: folderRows(sub), first: (all[0] as T).repo, changes: all.length },
         updatesByType,
         updates: all.reduce((n, c) => n + c.branch.upgrades.length, 0),
       };
@@ -61,16 +65,13 @@ function folderRows(folder: Folder<OpenChange>): ChangeRow[] {
   ];
 }
 
-function rowsFor(changes: OpenChange[], view: RepoView): ChangeRow[] {
+function rowsFor<T extends Change>(changes: T[], view: RepoView): Row<T>[] {
   if (view === "folders") return folderRows(buildFolderTree(changes, (c) => c.repo.name));
   return changes.map((c) => changeRow(c, view === "names" ? splitRepoName(c.repo.name).name : c.repo.name));
 }
 
-const childrenOf = (row: ChangeRow) => row.folder?.children;
-const rowKey = (row: ChangeRow) => row.key;
-
-/** The per-change columns, applied to change rows; folder rows leave them blank unless a total fits. */
-function lift(column: Column<OpenChange>): Column<ChangeRow> {
+/** A per-change column, applied to change rows; folder rows leave it blank. */
+function lift<T extends Change>(column: Column<T>): Column<Row<T>> {
   const { sort, render } = column;
   return {
     ...column,
@@ -79,8 +80,15 @@ function lift(column: Column<OpenChange>): Column<ChangeRow> {
   };
 }
 
-function columnsFor(term: string, updateTypes: string[], data: ReportData, view: RepoView): Column<ChangeRow>[] {
-  const [number, title, updates, branch] = changeColumns(term, updateTypes, data.platformUrl);
+/**
+ * Repository, then the per-change columns. Folder rows show their change count in the first of
+ * those and their summed update counts under Updates.
+ */
+function treeColumns<T extends Change>(
+  perChange: Column<T>[],
+  { term, updateTypes, data, view }: { term: string; updateTypes: string[]; data: ReportData; view: RepoView },
+): Column<Row<T>>[] {
+  const [first, ...rest] = perChange.map(lift);
   return [
     {
       label: "Repository",
@@ -92,50 +100,98 @@ function columnsFor(term: string, updateTypes: string[], data: ReportData, view:
           r.change && <RepoLink name={r.change.repo.name} report={data} hidePath={view !== "paths"} />
         ),
     },
-    {
-      ...lift(number),
-      render: (r) =>
-        r.folder ? <span class="muted">{plural(r.folder.changes, term)}</span> : r.change && number.render(r.change),
-    },
-    lift(title),
-    {
-      ...lift(updates),
-      sort: (r) => r.updates,
-      render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
-    },
-    lift(branch),
+    ...(first
+      ? [
+          {
+            ...first,
+            render: (r: Row<T>) =>
+              r.folder ? <span class="muted">{plural(r.folder.changes, term)}</span> : first.render(r),
+          },
+        ]
+      : []),
+    ...rest.map(
+      (column): Column<Row<T>> =>
+        column.label === "Updates"
+          ? {
+              ...column,
+              sort: (r) => r.updates,
+              render: (r) => <UpdateCounts counts={r.updatesByType} types={updateTypes} />,
+            }
+          : column,
+    ),
   ];
 }
 
-export function ChangesView({ data }: { data: ReportData }) {
-  const changes = useMemo(() => allOpenChanges(data.repositories), [data]);
-  const terms = changeTerms(data.repositories[0]?.platform);
-  // Only offer other views when names have a path to hide or nest.
-  const nested = changes.some((c) => c.repo.name.includes("/"));
-  const [view, setView] = useRepoView(nested);
+const childrenOf = <T extends Change>(row: Row<T>) => row.folder?.children;
+const rowKey = <T extends Change>(row: Row<T>) => row.key;
+
+function ChangeTable<T extends Change>({
+  changes,
+  perChange,
+  term,
+  data,
+  view,
+}: {
+  changes: T[];
+  perChange: (updateTypes: string[]) => Column<T>[];
+  term: string;
+  data: ReportData;
+  view: RepoView;
+}) {
   const updateTypes = useMemo(() => changeUpdateTypes(changes), [changes]);
   const columns = useMemo(
-    () => columnsFor(terms.short, updateTypes, data, view),
-    [terms.short, updateTypes, data, view],
+    () => treeColumns(perChange(updateTypes), { term, updateTypes, data, view }),
+    [perChange, updateTypes, term, data, view],
   );
+  const rows = useMemo(() => rowsFor(changes, view), [changes, view]);
+  return (
+    <>
+      {updateTypes.length > 0 && <UpdateTypesLegend types={updateTypes} />}
+      <SortableTable
+        columns={columns}
+        rows={rows}
+        rowKey={rowKey}
+        childrenOf={view === "folders" ? childrenOf : undefined}
+        initialSort={{ column: 0, desc: false }}
+        empty="Nothing matches the filter."
+      />
+    </>
+  );
+}
+
+function matches(change: Change, needle: string): boolean {
+  return [change.repo.name, change.branch.prTitle, change.branch.branchName].some((v) =>
+    v?.toLowerCase().includes(needle),
+  );
+}
+
+export function ChangesView({ data }: { data: ReportData }) {
+  const open = useMemo(() => allOpenChanges(data.repositories), [data]);
+  const heldBack = useMemo(() => allHeldBackChanges(data.repositories), [data]);
+  const terms = changeTerms(data.repositories[0]?.platform);
+  // Only offer other views when names have a path to hide or nest.
+  const nested = [...open, ...heldBack].some((c) => c.repo.name.includes("/"));
+  const [view, setView] = useRepoView(nested);
   const [filter, setFilter] = useState("");
   const needle = filter.trim().toLowerCase();
-  const rows = useMemo(() => {
-    const shown = needle
-      ? changes.filter((c) =>
-          [c.repo.name, c.branch.prTitle, c.branch.branchName].some((v) => v?.toLowerCase().includes(needle)),
-        )
-      : changes;
-    return rowsFor(shown, view);
-  }, [changes, needle, view]);
-  const repos = new Set(changes.map((c) => c.repo.name)).size;
-  const updates = changes.reduce((n, c) => n + c.branch.upgrades.length, 0);
+  const shownOpen = useMemo(() => (needle ? open.filter((c) => matches(c, needle)) : open), [open, needle]);
+  const shownHeldBack = useMemo(
+    () => (needle ? heldBack.filter((c) => matches(c, needle)) : heldBack),
+    [heldBack, needle],
+  );
+  const openColumns = useMemo(
+    () => (types: string[]) => changeColumns(terms.short, types, data.platformUrl),
+    [terms.short, data.platformUrl],
+  );
+  const heldBackCols = useMemo(() => (types: string[]) => heldBackColumns(terms.short, types), [terms.short]);
+  const repos = new Set(open.map((c) => c.repo.name)).size;
+  const updates = open.reduce((n, c) => n + c.branch.upgrades.length, 0);
 
   return (
     <>
       <h1>Open {terms.long}s</h1>
       <p class="muted">Renovate {terms.long}s that are open, across all repositories.</p>
-      {changes.length === 0 ? (
+      {open.length + heldBack.length === 0 ? (
         <p>
           No open Renovate {terms.long}s. Renovate leaves them out of the report when run with{" "}
           <code>--dry-run=lookup</code>.
@@ -143,9 +199,10 @@ export function ChangesView({ data }: { data: ReportData }) {
       ) : (
         <>
           <div class="stats">
-            <Stat label={`Open ${terms.short}s`} value={changes.length} />
+            <Stat label={`Open ${terms.short}s`} value={open.length} />
             <Stat label="Repositories" value={repos} />
             <Stat label="Updates" value={updates} />
+            {heldBack.length > 0 && <Stat label="Held back by limits" value={heldBack.length} />}
           </div>
           <div class="toolbar">
             <input
@@ -157,15 +214,27 @@ export function ChangesView({ data }: { data: ReportData }) {
             />
             {nested && <RepoViewToggle view={view} onChange={setView} />}
           </div>
-          <UpdateTypesLegend types={updateTypes} />
-          <SortableTable
-            columns={columns}
-            rows={rows}
-            rowKey={rowKey}
-            childrenOf={view === "folders" ? childrenOf : undefined}
-            initialSort={{ column: 0, desc: false }}
-            empty={`No ${terms.long}s match the filter.`}
-          />
+          {open.length > 0 ? (
+            <ChangeTable changes={shownOpen} perChange={openColumns} term={terms.short} data={data} view={view} />
+          ) : (
+            <p class="muted">No open Renovate {terms.long}s.</p>
+          )}
+          {heldBack.length > 0 && (
+            <section id="held-back">
+              <h2>Held back by limits</h2>
+              <p class="muted">
+                Renovate has these {terms.long}s ready but has not opened them, because it reached one of its limits.
+                They open on a later run once there is room. Hover a limit to see the setting behind it.
+              </p>
+              <ChangeTable
+                changes={shownHeldBack}
+                perChange={heldBackCols}
+                term={terms.short}
+                data={data}
+                view={view}
+              />
+            </section>
+          )}
         </>
       )}
     </>
