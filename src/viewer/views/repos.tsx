@@ -8,6 +8,7 @@ import {
   Age,
   ageInfo,
   type Column,
+  ColumnPicker,
   Count,
   libYearsInfo,
   orderUpdateTypes,
@@ -15,6 +16,7 @@ import {
   SortableTable,
   UpdateCounts,
   updateTypesInfo,
+  useHiddenColumns,
 } from "../components.tsx";
 import { GroupCell, type RepoView, RepoViewToggle, useRepoView } from "../repo-view.tsx";
 
@@ -203,6 +205,8 @@ export function ReposView({ data }: { data: ReportData }) {
       ),
     [updateTypes, repositories, data, activeView],
   );
+  const [hidden, setHidden] = useHiddenColumns("repos");
+  const shownColumns = useMemo(() => columns.filter((c) => !hidden.includes(c.label)), [columns, hidden]);
   const needle = filter.trim().toLowerCase();
   const matching = useMemo(
     () => (needle ? repositories.filter((repo) => repo.name.toLowerCase().includes(needle)) : repositories),
@@ -224,10 +228,13 @@ export function ReposView({ data }: { data: ReportData }) {
         <span class="muted">
           {matching.length} of {repositories.length}
         </span>
-        {nested && <RepoViewToggle view={activeView} onChange={setView} />}
+        <div class="toolbar-end">
+          {nested && <RepoViewToggle view={activeView} onChange={setView} />}
+          <ColumnPicker columns={columns.slice(1)} hidden={hidden} onChange={setHidden} />
+        </div>
       </div>
       <SortableTable
-        columns={columns}
+        columns={shownColumns}
         rows={rows}
         rowKey={rowKey}
         childrenOf={activeView === "folders" ? childrenOf : undefined}

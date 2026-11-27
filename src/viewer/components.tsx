@@ -447,6 +447,79 @@ export function SortableTable<T>({
   );
 }
 
+/** Labels of the columns hidden in table `table`, remembered across pages and visits. */
+export function useHiddenColumns(table: string): [string[], (hidden: string[]) => void] {
+  const key = `renovate-report-html:hidden-columns:${table}`;
+  const [hidden, setHidden] = useState<string[]>(() => {
+    try {
+      const stored: unknown = JSON.parse(localStorage.getItem(key) ?? "[]");
+      return Array.isArray(stored) ? stored.filter((label) => typeof label === "string") : [];
+    } catch {
+      return [];
+    }
+  });
+  const choose = (next: string[]) => {
+    setHidden(next);
+    try {
+      localStorage.setItem(key, JSON.stringify(next));
+    } catch {
+      // Site data blocked: the choice still applies to this page view.
+    }
+  };
+  return [hidden, choose];
+}
+
+/** A "Columns" menu with a checkbox per column. Closes on a click outside or Escape. */
+export function ColumnPicker<T>({
+  columns,
+  hidden,
+  onChange,
+}: {
+  columns: Column<T>[];
+  hidden: string[];
+  onChange: (hidden: string[]) => void;
+}) {
+  const menu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (e: Event) => {
+      const details = menu.current;
+      if (!details?.open) return;
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !details.contains(e.target as Node)) details.open = false;
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", close);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", close);
+    };
+  }, []);
+  const shown = columns.filter((column) => !hidden.includes(column.label)).length;
+  return (
+    <details ref={menu} class="column-picker">
+      <summary>
+        Columns{" "}
+        <span class="column-picker-count">
+          {shown}/{columns.length}
+        </span>
+      </summary>
+      <fieldset class="column-picker-menu" aria-label="Columns to show">
+        {columns.map(({ label }) => (
+          <label key={label}>
+            <input
+              type="checkbox"
+              checked={!hidden.includes(label)}
+              onChange={(e) =>
+                onChange(e.currentTarget.checked ? hidden.filter((h) => h !== label) : [...hidden, label])
+              }
+            />
+            {label}
+          </label>
+        ))}
+      </fieldset>
+    </details>
+  );
+}
+
 /** Explains the age colours; goes in the `info` of age columns. */
 export const ageInfo = (
   <>
