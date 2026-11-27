@@ -86,8 +86,9 @@ function depColumns(changes?: RowChanges<Dep>): Column<Dep>[] {
   return [...baseDepColumns.slice(0, at), changesColumn(`Open ${changes.term}`, changes), ...baseDepColumns.slice(at)];
 }
 
-function matches(dep: Dep, filter: string, onlyUpdates: boolean): boolean {
+function matches(dep: Dep, filter: string, onlyUpdates: boolean, skipReasons: string[]): boolean {
   if (onlyUpdates && dep.updates.length === 0) return false;
+  if (skipReasons.length && !(dep.skipReason && skipReasons.includes(dep.skipReason))) return false;
   if (!filter) return true;
   const needle = filter.toLowerCase();
   return [dep.name, dep.packageName, dep.depType, dep.datasource].some((v) => v?.toLowerCase().includes(needle));
@@ -117,8 +118,15 @@ export function RepoView({
   });
   const [filter, setFilter] = useState("");
   const [onlyUpdates, setOnlyUpdates] = useState(false);
+  const [skipReasons, setSkipReasons] = useState<string[]>([]);
   const deps = [...allDeps([repo])].map((ref) => ref.dep);
   const outdated = deps.filter((d) => d.updates.length > 0).length;
+  const skipCounts = new Map<string, number>();
+  for (const { skipReason } of deps) if (skipReason) skipCounts.set(skipReason, (skipCounts.get(skipReason) ?? 0) + 1);
+  const skipped = [...skipCounts.values()].reduce((a, b) => a + b, 0);
+  const toggleSkip = (reason: string) =>
+    setSkipReasons(skipReasons.includes(reason) ? skipReasons.filter((r) => r !== reason) : [...skipReasons, reason]);
+  const filtering = Boolean(filter) || onlyUpdates || skipReasons.length > 0;
   const updates = deps.reduce((n, d) => n + d.updates.length, 0);
   const meta = [
     repo.platform,
@@ -152,6 +160,7 @@ export function RepoView({
         <Stat label="Dependencies" value={deps.length} />
         <Stat label="With updates" value={outdated} />
         <Stat label="Pending updates" value={updates} />
+        <Stat label="Skipped" value={skipped} />
         {repo.libYears !== undefined && <Stat label="Libyears" value={repo.libYears.toFixed(1)} info={libYearsInfo} />}
         <Stat label="Problems" value={repo.problems.length} tone={repo.problems.length ? "warn" : undefined} />
       </div>
@@ -230,13 +239,36 @@ export function RepoView({
             </label>
           </div>
         </div>
+        {skipCounts.size > 0 && (
+          <fieldset class="filter-chips">
+            <legend class="muted">Skipped</legend>
+            {[...skipCounts]
+              .sort((a, b) => b[1] - a[1])
+              .map(([reason, count]) => (
+                <button
+                  key={reason}
+                  type="button"
+                  class="filter-chip"
+                  aria-pressed={skipReasons.includes(reason)}
+                  onClick={() => toggleSkip(reason)}
+                >
+                  {reason} <span class="count">{count}</span>
+                </button>
+              ))}
+            {skipReasons.length > 0 && (
+              <button type="button" class="filter-clear" onClick={() => setSkipReasons([])}>
+                Clear
+              </button>
+            )}
+          </fieldset>
+        )}
         {repo.managers.map((manager) => {
           const files = manager.packageFiles
             .map((file) => ({
               ...file,
-              shown: file.deps.filter((d) => matches(d, filter, onlyUpdates)),
+              shown: file.deps.filter((d) => matches(d, filter, onlyUpdates, skipReasons)),
             }))
-            .filter((file) => file.shown.length > 0 || (!filter && !onlyUpdates));
+            .filter((file) => file.shown.length > 0 || !filtering);
           if (files.length === 0) return null;
           return (
             <section key={manager.name} id={`manager-${manager.name}`} class="manager">

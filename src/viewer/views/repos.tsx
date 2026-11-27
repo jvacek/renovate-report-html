@@ -30,6 +30,8 @@ interface RepoRow {
   managers: number;
   deps: number;
   outdated: number;
+  skippedByReason: Record<string, number>;
+  skipped: number;
   updatesByType: Record<string, number>;
   updates: number;
   openChanges: number;
@@ -47,6 +49,8 @@ function statsOf(repos: Repository[]): Stats {
     managers: new Set(repos.flatMap((repo) => repo.managers.map((m) => m.name))).size,
     deps: 0,
     outdated: 0,
+    skippedByReason: {},
+    skipped: 0,
     updatesByType: {},
     updates: 0,
     openChanges: repos.reduce((sum, repo) => sum + openChanges(repo).length, 0),
@@ -56,6 +60,10 @@ function statsOf(repos: Repository[]): Stats {
   for (const { dep } of allDeps(repos)) {
     row.deps++;
     if (dep.updates.length > 0) row.outdated++;
+    if (dep.skipReason) {
+      row.skipped++;
+      row.skippedByReason[dep.skipReason] = (row.skippedByReason[dep.skipReason] ?? 0) + 1;
+    }
     for (const update of dep.updates) {
       const type = updateTypeOf(update);
       row.updatesByType[type] = (row.updatesByType[type] ?? 0) + 1;
@@ -143,6 +151,22 @@ function columnsFor(updateTypes: string[], data: ReportData, view: RepoView, cha
       descFirst: true,
       sort: (r) => r.outdated,
       render: (r) => <Count value={r.outdated} />,
+    },
+    {
+      label: "Skipped",
+      class: "num",
+      descFirst: true,
+      sort: (r) => r.skipped,
+      render: (r) => (
+        <span
+          title={Object.entries(r.skippedByReason)
+            .sort((a, b) => b[1] - a[1])
+            .map(([reason, n]) => `${reason}: ${n}`)
+            .join("\n")}
+        >
+          <Count value={r.skipped} />
+        </span>
+      ),
     },
     {
       label: "Updates",
