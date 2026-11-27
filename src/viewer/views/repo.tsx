@@ -280,8 +280,15 @@ export function RepoView({
   );
 }
 
-/** In-page jump that leaves the hash route alone. */
+/**
+ * In-page jump that leaves the hash route alone. Lands just below the sticky topbar, measured
+ * now since it grows when it wraps on narrow screens.
+ */
 function scrollToId(event: Event, id: string) {
   event.preventDefault();
-  document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const target = document.getElementById(id);
+  if (!target) return;
+  const topbar = document.querySelector(".topbar")?.getBoundingClientRect().height ?? 0;
+  const top = target.getBoundingClientRect().top + window.scrollY - topbar - 12;
+  window.scrollTo({ top, behavior: "smooth" });
 }
