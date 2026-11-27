@@ -543,6 +543,11 @@ th {
   white-space: nowrap;
 }
 
+/* Headers stay left-aligned over number columns too: the column lines already tie them together. */
+th.num {
+  text-align: left;
+}
+
 .sort {
   all: unset;
   cursor: pointer;
@@ -605,13 +610,6 @@ th {
 .th-content {
   display: inline-flex;
   align-items: baseline;
-}
-
-/* In right-aligned columns the arrow goes first, so the label lines up with the numbers. */
-.num .sort-arrow {
-  order: -1;
-  margin: 0 0.2em 0 0;
-  text-align: right;
 }
 
 .badge {
