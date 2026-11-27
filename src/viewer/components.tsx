@@ -820,16 +820,40 @@ export function RepoName({ name, hidePath }: { name: string; hidePath?: boolean 
  * (offline, or a private project the browser isn't signed in to).
  */
 export function RepoAvatar({ url, name }: { url?: string; name: string }) {
-  const [failed, setFailed] = useState(false);
+  if (url) keepIcon(url);
+  const [failed, setFailed] = useState(() => url !== undefined && failedIcons.has(url));
+  const fail = () => {
+    if (url) failedIcons.add(url);
+    setFailed(true);
+  };
   return (
     <span class="repo-avatar" aria-hidden="true">
       {splitRepoName(name).name.charAt(0).toUpperCase()}
-      {url && !failed && (
-        <img src={url} alt="" loading="lazy" referrerpolicy="no-referrer" onError={() => setFailed(true)} />
-      )}
+      {url && !failed && <img src={url} alt="" referrerpolicy="no-referrer" onError={fail} />}
     </span>
   );
 }
+
+/**
+ * Every icon requested so far, held for the life of the page. Browsers reuse an image already in
+ * the page without asking the server again, but may drop it once no element shows it. GitLab
+ * sends avatars with `Cache-Control: no-cache`, so without this, every re-render that swaps the
+ * rows (switching between names and folders) asks GitLab again and the icons pop in late.
+ * Loaded as plain images rather than fetched, so private icons still get the browser's sign-in.
+ */
+const keptIcons = new Map<string, HTMLImageElement>();
+
+function keepIcon(url: string) {
+  // Embedded icons are already in the page.
+  if (url.startsWith("data:") || keptIcons.has(url)) return;
+  const image = new Image();
+  image.referrerPolicy = "no-referrer";
+  image.src = url;
+  keptIcons.set(url, image);
+}
+
+/** Icons that didn't load, so remounts show the letter tile straight away instead of retrying. */
+const failedIcons = new Set<string>();
 
 const reposByName = new WeakMap<Repository[], Map<string, Repository>>();
 
