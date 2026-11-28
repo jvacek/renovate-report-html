@@ -6,14 +6,8 @@ Releases go to npm from GitHub Actions (`.github/workflows/release.yml`) when a 
 
 From an up-to-date `main` with a clean working tree:
 
-1. In [CHANGELOG.md](CHANGELOG.md), rename `## Unreleased` to `## X.Y.Z - YYYY-MM-DD` and commit it.
-2. Tag and push:
-
-   ```sh
-   npm version minor        # or patch / major: bumps package.json, commits, tags vX.Y.Z
-   git push --follow-tags
-   ```
-
+1. In [CHANGELOG.md](CHANGELOG.md), rename `## Unreleased` to `## X.Y.Z - YYYY-MM-DD`, commit and push it.
+2. Run `just release`. It checks that the working tree is clean, `main` matches `origin/main`, and every `##` heading in the changelog is a version with a date. It prints the release notes for the version at the top of the changelog and asks you to confirm. Then it runs `npm version` with that version (which bumps `package.json`, commits and tags `vX.Y.Z`) and pushes the tag.
 3. Start a new empty `## Unreleased` section for the next changes.
 
 The workflow tests and packs the tagged commit, waits for approval in the `npm` environment, publishes, and creates a GitHub release with that version's changelog section as its notes and the package attached. It stops before publishing if the changelog has no section for the version.

@@ -9,7 +9,7 @@ pnpm install
 prek install    # git hooks
 ```
 
-`pnpm dev` starts the viewer with hot reload on `fixtures/github-report.json`. Add `?fixture=<name>` to load another file from `fixtures/`. The other scripts are in `package.json`.
+`just dev` (or `pnpm dev`) starts the viewer with hot reload on `fixtures/github-report.json`. Add `?fixture=<name>` to load another file from `fixtures/`. The other scripts are in `package.json`.
 
 Before opening a pull request, run `prek run --all-files` and `pnpm test`.
 
