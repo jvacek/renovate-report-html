@@ -15,6 +15,7 @@ Renovate `reportType=file` JSON in, one self-contained `index.html` out. Scripts
 - **Distribution plan:** npm `bin`, then a `bun --compile` binary. Keep the CLI to Node built-ins plus zod, and locate the template relative to `import.meta.url`.
 - **CI:** pin actions to commit SHAs and give each job only the permissions it needs.
 - **User-facing copy:** plain wording, no em-dashes.
+- **Changelog:** a change people using the report would notice gets a line under `## Unreleased` in `CHANGELOG.md`, in the same commit. Write what changed for them, not how. Releases take their notes from it (RELEASING.md).
 - **Toolbars:** search box first, then its match count. Filters and view controls go in `.toolbar-end` in the same `.toolbar`, so they sit right-aligned next to the search and never on a row of their own. A filter with more than one value is a `FilterPicker` dropdown, not a row of chips.
 
 ## Done means

@@ -13,6 +13,10 @@ prek install    # git hooks
 
 Before opening a pull request, run `prek run --all-files` and `pnpm test`.
 
+## Changelog
+
+If people using the report would notice your change, add a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md), in the same pull request. Put it under Added, Changed, Fixed or Removed, and describe what changed for them, not how you built it. Internal changes such as refactors, tests and CI don't need an entry. Release notes come from this file.
+
 ## How it works
 
 The viewer (Preact, in `src/viewer/`) is built once into a single HTML template. The CLI (`src/cli.ts`) validates a report with the zod schema in `src/report/schema.ts`, trims it to what the viewer needs, and pastes it into that template. People using the CLI never run a bundler.
