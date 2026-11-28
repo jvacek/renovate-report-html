@@ -211,6 +211,19 @@ export function RepoView({
 
       <section>
         <h2>Dependencies</h2>
+        <nav class="jump-links" aria-label="Jump to manager">
+          <span class="jump-label">Jump to</span>
+          {repo.managers.map((m) => (
+            <a
+              key={m.name}
+              class="jump-link"
+              href={`#manager-${m.name}`}
+              onClick={(e) => scrollToId(e, `manager-${m.name}`)}
+            >
+              {m.name}
+            </a>
+          ))}
+        </nav>
         <div class="toolbar">
           <input
             type="search"
@@ -220,19 +233,6 @@ export function RepoView({
             aria-label="Filter dependencies"
           />
           <div class="toolbar-end">
-            <nav class="jump-links" aria-label="Jump to manager">
-              <span class="jump-label">Jump to</span>
-              {repo.managers.map((m) => (
-                <a
-                  key={m.name}
-                  class="jump-link"
-                  href={`#manager-${m.name}`}
-                  onClick={(e) => scrollToId(e, `manager-${m.name}`)}
-                >
-                  {m.name}
-                </a>
-              ))}
-            </nav>
             <label class="filter-chip">
               <input type="checkbox" checked={onlyUpdates} onChange={(e) => setOnlyUpdates(e.currentTarget.checked)} />
               Only with updates <span class="count">{outdated}</span>
