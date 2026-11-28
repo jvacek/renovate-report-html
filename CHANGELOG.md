@@ -2,7 +2,7 @@
 
 Notable changes for people using the report. Versions follow [semantic versioning](https://semver.org).
 
-## Unreleased
+## 1.0.1 - 2026-11-28
 
 ### Changed
 
