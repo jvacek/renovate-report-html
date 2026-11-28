@@ -39,6 +39,10 @@ Supported and tested, including a weekly check against the latest Renovate relea
 > [!WARNING]
 > Renovate's report format is experimental and can change between minor releases. If a Renovate version breaks the page, the CLI names the field that changed; please [open an issue](https://github.com/jvacek/renovate-report-html/issues) with that output.
 
+## Changelog
+
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

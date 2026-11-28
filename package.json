@@ -36,7 +36,8 @@
     "renovate-report-html": "dist/cli.mjs"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=22.12"
