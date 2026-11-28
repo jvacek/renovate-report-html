@@ -398,11 +398,12 @@ h3::before {
   border-radius: var(--radius);
 }
 
-/* Secondary controls, pushed to the right of the search box. */
+/* Filters and view controls sit right-aligned next to the search box, never on a row of their own. */
 .toolbar-end {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 0.5rem 1rem;
   margin-left: auto;
 }
@@ -634,7 +635,7 @@ th .info-tip {
  */
 .tree-toggle::before,
 th[aria-sort] .sort-arrow::before,
-details.column-picker > summary::after,
+details.menu-picker > summary::after,
 .package-file > summary::before,
 .repo-list summary::before {
   content: "";
@@ -656,12 +657,12 @@ details.column-picker > summary::after,
 .package-file[open] > summary::before,
 .repo-list details[open] > summary::before,
 th[aria-sort="descending"] .sort-arrow::before,
-details.column-picker > summary::after {
+details.menu-picker > summary::after {
   rotate: 90deg;
 }
 
 th[aria-sort="ascending"] .sort-arrow::before,
-details.column-picker[open] > summary::after {
+details.menu-picker[open] > summary::after {
   rotate: -90deg;
 }
 
@@ -1243,24 +1244,7 @@ h1 .repo-avatar {
   font-family: system-ui, sans-serif;
 }
 
-.filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  margin: 0.5rem 0;
-  padding: 0;
-  border: 0;
-}
-
-.filter-chips legend {
-  float: left;
-  margin-right: 0.4rem;
-  padding: 0;
-}
-
-.filter-chip,
-.filter-clear {
+.filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
@@ -1288,15 +1272,9 @@ h1 .repo-avatar {
   outline: 2px solid var(--accent);
 }
 
-.filter-chip[aria-pressed="true"],
 .filter-chip:has(:checked) {
   background: var(--info-bg);
   border-color: var(--accent);
-}
-
-.filter-clear {
-  border-style: dashed;
-  color: var(--muted);
 }
 
 .repo-list ul {
@@ -1340,12 +1318,19 @@ h1 .repo-avatar {
   font-weight: 600;
 }
 
-/* A dropdown of column checkboxes, opening below its button, right-aligned. */
-.column-picker {
+/* A dropdown of checkboxes (columns or filters), opening below its button, right-aligned. */
+.menu-picker {
   position: relative;
 }
 
-details.column-picker > summary {
+/* A filter with something ticked reads as on, like a ticked chip. */
+details.menu-picker.active > summary {
+  color: var(--fg);
+  background: var(--info-bg);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+details.menu-picker > summary {
   display: flex;
   align-items: center;
   gap: 0.4em;
@@ -1357,34 +1342,36 @@ details.column-picker > summary {
   cursor: pointer;
 }
 
-details.column-picker > summary::-webkit-details-marker {
+details.menu-picker > summary::-webkit-details-marker {
   display: none;
 }
 
-details.column-picker > summary::after {
+details.menu-picker > summary::after {
   font-size: 0.75em;
 }
 
-details.column-picker > summary:hover,
-details.column-picker[open] > summary {
+details.menu-picker > summary:hover,
+details.menu-picker[open] > summary {
   color: var(--fg);
 }
 
-details.column-picker > summary:focus-visible {
+details.menu-picker > summary:focus-visible {
   outline: 2px solid var(--accent);
 }
 
-.column-picker-count {
+.menu-picker-count {
   font-variant-numeric: tabular-nums;
 }
 
-.column-picker-menu {
+.menu-picker-menu {
   position: absolute;
   z-index: 10;
   top: calc(100% + 4px);
   right: 0;
   display: grid;
   gap: 0.15rem;
+  max-height: min(24rem, 70vh);
+  overflow-y: auto;
   margin: 0;
   padding: 0.4rem;
   white-space: nowrap;
@@ -1394,7 +1381,7 @@ details.column-picker > summary:focus-visible {
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
 }
 
-.column-picker-menu label {
+.menu-picker-menu label {
   display: flex;
   align-items: center;
   gap: 0.5em;
@@ -1403,11 +1390,31 @@ details.column-picker > summary:focus-visible {
   cursor: pointer;
 }
 
-.column-picker-menu label:hover {
+.menu-picker-menu label:hover,
+.menu-picker-clear:hover {
   background: var(--bg-soft);
 }
 
-.column-picker-menu input {
+.menu-picker-menu .count {
+  margin-left: auto;
+  padding-left: 1em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.menu-picker-clear {
+  padding: 0.2rem 0.4rem;
+  font: inherit;
+  text-align: left;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.menu-picker-menu input {
   margin: 0;
   accent-color: var(--accent);
 }

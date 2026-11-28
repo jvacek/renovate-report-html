@@ -484,15 +484,19 @@ export function useHiddenColumns(table: string): [string[], (hidden: string[]) =
   return [hidden, choose];
 }
 
-/** A "Columns" menu with a checkbox per column. Closes on a click outside or Escape. */
-export function ColumnPicker<T>({
-  columns,
-  hidden,
-  onChange,
+/** A button opening a menu of checkboxes below it. Closes on a click outside or Escape. */
+function MenuPicker({
+  label,
+  count,
+  active,
+  menuLabel,
+  children,
 }: {
-  columns: Column<T>[];
-  hidden: string[];
-  onChange: (hidden: string[]) => void;
+  label: string;
+  count?: ComponentChildren;
+  active?: boolean;
+  menuLabel: string;
+  children: ComponentChildren;
 }) {
   const menu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -508,30 +512,91 @@ export function ColumnPicker<T>({
       document.removeEventListener("keydown", close);
     };
   }, []);
-  const shown = columns.filter((column) => !hidden.includes(column.label)).length;
   return (
-    <details ref={menu} class="column-picker">
+    <details ref={menu} class={`menu-picker ${active ? "active" : ""}`}>
       <summary>
-        Columns{" "}
-        <span class="column-picker-count">
-          {shown}/{columns.length}
-        </span>
+        {label}
+        {count !== undefined && <span class="menu-picker-count">{count}</span>}
       </summary>
-      <fieldset class="column-picker-menu" aria-label="Columns to show">
-        {columns.map(({ label }) => (
-          <label key={label}>
-            <input
-              type="checkbox"
-              checked={!hidden.includes(label)}
-              onChange={(e) =>
-                onChange(e.currentTarget.checked ? hidden.filter((h) => h !== label) : [...hidden, label])
-              }
-            />
-            {label}
-          </label>
-        ))}
+      <fieldset class="menu-picker-menu" aria-label={menuLabel}>
+        {children}
       </fieldset>
     </details>
+  );
+}
+
+/** A "Columns" menu with a checkbox per column. */
+export function ColumnPicker<T>({
+  columns,
+  hidden,
+  onChange,
+}: {
+  columns: Column<T>[];
+  hidden: string[];
+  onChange: (hidden: string[]) => void;
+}) {
+  const shown = columns.filter((column) => !hidden.includes(column.label)).length;
+  return (
+    <MenuPicker label="Columns" count={`${shown}/${columns.length}`} menuLabel="Columns to show">
+      {columns.map(({ label }) => (
+        <label key={label}>
+          <input
+            type="checkbox"
+            checked={!hidden.includes(label)}
+            onChange={(e) => onChange(e.currentTarget.checked ? hidden.filter((h) => h !== label) : [...hidden, label])}
+          />
+          {label}
+        </label>
+      ))}
+    </MenuPicker>
+  );
+}
+
+export interface FilterOption {
+  value: string;
+  count: number;
+  icon?: ComponentChildren;
+}
+
+/** A filter menu: tick options to show only matching rows. Nothing ticked shows everything. */
+export function FilterPicker({
+  label,
+  options,
+  selected,
+  onChange,
+}: {
+  label: string;
+  options: FilterOption[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+}) {
+  return (
+    <MenuPicker
+      label={label}
+      count={selected.length > 0 ? selected.length : undefined}
+      active={selected.length > 0}
+      menuLabel={`Filter by ${label.toLowerCase()}`}
+    >
+      {options.map(({ value, count, icon }) => (
+        <label key={value}>
+          <input
+            type="checkbox"
+            checked={selected.includes(value)}
+            onChange={(e) =>
+              onChange(e.currentTarget.checked ? [...selected, value] : selected.filter((s) => s !== value))
+            }
+          />
+          {icon}
+          {value}
+          <span class="count">{count}</span>
+        </label>
+      ))}
+      {selected.length > 0 && (
+        <button type="button" class="menu-picker-clear" onClick={() => onChange([])}>
+          Clear
+        </button>
+      )}
+    </MenuPicker>
   );
 }
 

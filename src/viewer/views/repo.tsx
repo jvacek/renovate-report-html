@@ -15,6 +15,7 @@ import {
   DepName,
   EmptyState,
   ExternalButton,
+  FilterPicker,
   heldBackColumns,
   libYearsInfo,
   Occurrences,
@@ -125,8 +126,6 @@ export function RepoView({
   const skipCounts = new Map<string, number>();
   for (const { skipReason } of deps) if (skipReason) skipCounts.set(skipReason, (skipCounts.get(skipReason) ?? 0) + 1);
   const skipped = [...skipCounts.values()].reduce((a, b) => a + b, 0);
-  const toggleSkip = (reason: string) =>
-    setSkipReasons(skipReasons.includes(reason) ? skipReasons.filter((r) => r !== reason) : [...skipReasons, reason]);
   const filtering = Boolean(filter) || onlyUpdates || skipReasons.length > 0;
   const updates = deps.reduce((n, d) => n + d.updates.length, 0);
   const meta = [
@@ -238,31 +237,16 @@ export function RepoView({
               <input type="checkbox" checked={onlyUpdates} onChange={(e) => setOnlyUpdates(e.currentTarget.checked)} />
               Only with updates <span class="count">{outdated}</span>
             </label>
+            {skipCounts.size > 0 && (
+              <FilterPicker
+                label="Skipped"
+                options={[...skipCounts].sort((a, b) => b[1] - a[1]).map(([value, count]) => ({ value, count }))}
+                selected={skipReasons}
+                onChange={setSkipReasons}
+              />
+            )}
           </div>
         </div>
-        {skipCounts.size > 0 && (
-          <fieldset class="filter-chips">
-            <legend class="muted">Skipped</legend>
-            {[...skipCounts]
-              .sort((a, b) => b[1] - a[1])
-              .map(([reason, count]) => (
-                <button
-                  key={reason}
-                  type="button"
-                  class="filter-chip"
-                  aria-pressed={skipReasons.includes(reason)}
-                  onClick={() => toggleSkip(reason)}
-                >
-                  {reason} <span class="count">{count}</span>
-                </button>
-              ))}
-            {skipReasons.length > 0 && (
-              <button type="button" class="filter-clear" onClick={() => setSkipReasons([])}>
-                Clear
-              </button>
-            )}
-          </fieldset>
-        )}
         {repo.managers.map((manager) => {
           const files = manager.packageFiles
             .map((file) => ({

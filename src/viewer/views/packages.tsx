@@ -1,6 +1,6 @@
 import { useMemo } from "preact/hooks";
 import { type PackageUsage, type VersionCount, versionCounts } from "../../report/stats.ts";
-import { Age, ageInfo, type Column, Count, DepName, SortableTable } from "../components.tsx";
+import { Age, ageInfo, type Column, Count, DepName, FilterPicker, SortableTable } from "../components.tsx";
 import { DatasourceIcon } from "../datasource-icon.tsx";
 import { href, type PackageFilter, replaceHash } from "../router.ts";
 
@@ -94,12 +94,6 @@ export function PackagesView({ packages, filter }: { packages: PackageUsage[]; f
       (!needle || usage.name.toLowerCase().includes(needle)),
   );
   const update = (next: Partial<PackageFilter>) => replaceHash(href.packages({ ...filter, ...next }));
-  const toggle = (ds: string) =>
-    update({
-      datasources: filter.datasources.includes(ds)
-        ? filter.datasources.filter((d) => d !== ds)
-        : [...filter.datasources, ds],
-    });
 
   return (
     <>
@@ -118,27 +112,19 @@ export function PackagesView({ packages, filter }: { packages: PackageUsage[]; f
         <span class="muted">
           {filtered.length} of {packages.length}
         </span>
+        <div class="toolbar-end">
+          <FilterPicker
+            label="Datasource"
+            options={datasourceCounts.map(([ds, count]) => ({
+              value: ds,
+              count,
+              icon: <DatasourceIcon datasource={ds === "unknown" ? undefined : ds} />,
+            }))}
+            selected={filter.datasources}
+            onChange={(datasources) => update({ datasources })}
+          />
+        </div>
       </div>
-      <fieldset class="filter-chips">
-        <legend class="muted">Datasource</legend>
-        {datasourceCounts.map(([ds, count]) => (
-          <button
-            key={ds}
-            type="button"
-            class="filter-chip"
-            aria-pressed={filter.datasources.includes(ds)}
-            onClick={() => toggle(ds)}
-          >
-            <DatasourceIcon datasource={ds === "unknown" ? undefined : ds} />
-            {ds} <span class="count">{count}</span>
-          </button>
-        ))}
-        {filter.datasources.length > 0 && (
-          <button type="button" class="filter-clear" onClick={() => update({ datasources: [] })}>
-            Clear
-          </button>
-        )}
-      </fieldset>
       <SortableTable
         columns={columns}
         rows={filtered}

@@ -209,7 +209,11 @@ export function ChangesView({ data }: { data: ReportData }) {
               onInput={(e) => setFilter(e.currentTarget.value)}
               aria-label={`Filter ${terms.long}s`}
             />
-            {nested && <RepoViewToggle view={view} onChange={setView} />}
+            {nested && (
+              <div class="toolbar-end">
+                <RepoViewToggle view={view} onChange={setView} />
+              </div>
+            )}
           </div>
           {open.length > 0 ? (
             <ChangeTable changes={shownOpen} perChange={openColumns} term={terms.short} data={data} view={view} />
